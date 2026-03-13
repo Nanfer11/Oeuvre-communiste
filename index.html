@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Encyclopédie des grandes batailles et conflits de l'histoire mondiale. Explorez Marathon, Thermopyles, Gaugamèles et bien d'autres.">
+
+  <title>Histoire des Batailles &amp; Conflits Mondiaux</title>
+
+  <!-- Polices Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="accueil">
+
+  <!-- ======================================================
+       EN-TÊTE DU SITE
+       ====================================================== -->
+  <header class="site-entete" role="banner">
+    <div class="conteneur">
+      <p class="site-entete__surtitre">Encyclopédie historique</p>
+      <h1 class="site-entete__titre">Histoire des Batailles<br>&amp; Conflits Mondiaux</h1>
+      <p class="site-entete__sous-titre">
+        Des guerres médiques aux conquêtes d'Alexandre — les batailles qui ont façonné l'histoire.
+      </p>
+    </div>
+  </header>
+
+  <!-- ======================================================
+       FRISE CHRONOLOGIQUE
+       ====================================================== -->
+  <section class="frise" aria-label="Frise chronologique des batailles">
+    <div class="frise__piste" id="frise-piste" role="list">
+      <div class="frise__axe" id="frise-axe">
+        <!-- Généré dynamiquement par construireFrise() dans app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================
+       CONTENU PRINCIPAL
+       ====================================================== -->
+  <main id="contenu-principal">
+
+    <!-- Barre de filtres (sticky) -->
+    <div class="barre-filtres" role="search" aria-label="Filtrer les batailles">
+      <div class="conteneur">
+        <div class="barre-filtres__interieur">
+
+          <!-- Recherche textuelle -->
+          <div class="champ-recherche">
+            <span class="champ-recherche__icone" aria-hidden="true">⚲</span>
+            <input
+              type="search"
+              id="champ-recherche"
+              name="recherche"
+              placeholder="Rechercher une bataille, un lieu, un conflit…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Rechercher une bataille"
+            >
+          </div>
+
+          <!-- Filtre par époque -->
+          <select
+            id="filtre-epoque"
+            class="filtre-select"
+            aria-label="Filtrer par époque"
+          >
+            <option value="toutes">Toutes les époques</option>
+            <option value="antiquite">Antiquité</option>
+            <option value="moyen-age">Moyen Âge</option>
+            <option value="moderne">Époque moderne</option>
+            <option value="contemporaine">Époque contemporaine</option>
+            <option value="xxe">XXe siècle</option>
+          </select>
+
+          <!-- Filtre par importance -->
+          <select
+            id="filtre-importance"
+            class="filtre-select"
+            aria-label="Filtrer par importance"
+          >
+            <option value="toutes">Toute importance</option>
+            <option value="decisive">Décisive</option>
+            <option value="majeure">Majeure</option>
+            <option value="notable">Notable</option>
+          </select>
+
+          <!-- Tri -->
+          <select
+            id="filtre-tri"
+            class="filtre-select"
+            aria-label="Trier les batailles"
+          >
+            <option value="date-asc">Date — croissante</option>
+            <option value="date-desc">Date — décroissante</option>
+            <option value="nom-asc">Nom — A → Z</option>
+            <option value="nom-desc">Nom — Z → A</option>
+          </select>
+
+          <!-- Compteur de résultats -->
+          <p class="compteur-resultats" aria-live="polite" aria-atomic="true">
+            <span id="compteur-resultats"></span>
+          </p>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Grille des batailles -->
+    <section class="section-batailles" aria-label="Liste des batailles">
+      <div class="conteneur">
+        <div
+          class="grille-batailles"
+          id="grille-batailles"
+          role="list"
+          aria-label="Cartes des batailles"
+        >
+          <!-- Généré dynamiquement par afficherBatailles() dans app.js -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================
+       PIED DE PAGE
+       ====================================================== -->
+  <footer class="site-pied" role="contentinfo">
+    <div class="conteneur">
+      <p>
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+        Histoire des Batailles &amp; Conflits Mondiaux
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts — data.js doit être chargé avant app.js -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

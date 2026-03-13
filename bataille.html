@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Détail d'une bataille historique — Histoire des Batailles &amp; Conflits Mondiaux.">
+
+  <!-- Le titre est mis à jour dynamiquement par app.js -->
+  <title>Bataille — Histoire des Batailles &amp; Conflits Mondiaux</title>
+
+  <!-- Polices Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="detail">
+
+  <!-- ======================================================
+       EN-TÊTE DU SITE
+       ====================================================== -->
+  <header class="site-entete" role="banner">
+    <div class="conteneur">
+      <p class="site-entete__surtitre">Encyclopédie historique</p>
+      <h1 class="site-entete__titre">Histoire des Batailles<br>&amp; Conflits Mondiaux</h1>
+    </div>
+  </header>
+
+  <!-- ======================================================
+       CONTENU PRINCIPAL
+       ====================================================== -->
+  <main id="contenu-principal">
+    <div class="conteneur">
+
+      <!-- Barre de navigation — bouton retour -->
+      <nav class="barre-nav" aria-label="Navigation">
+        <a href="index.html" class="btn-retour" aria-label="Retour à la liste des batailles">
+          <span class="btn-retour__fleche" aria-hidden="true">←</span>
+          Retour aux archives
+        </a>
+      </nav>
+
+      <!-- Zone de contenu dynamique
+           app.js injecte ici :
+           - l'en-tête de la bataille  (.detail-entete)
+           - le corps en deux colonnes (.detail-corps)
+             ├── colonne principale    (.detail-principal)
+             │   ├── section belligérants (.detail-belligerants)
+             │   ├── section déroulement
+             │   └── section conséquences
+             └── fiche récapitulative  (.detail-fiche)
+           ou le message d'erreur 404  (.page-erreur)
+      -->
+      <div id="detail-conteneur" role="article" aria-live="polite">
+        <!-- Contenu généré par afficherPageDetail() dans app.js -->
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ======================================================
+       PIED DE PAGE
+       ====================================================== -->
+  <footer class="site-pied" role="contentinfo">
+    <div class="conteneur">
+      <p>
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+        Histoire des Batailles &amp; Conflits Mondiaux
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts — data.js doit être chargé avant app.js -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

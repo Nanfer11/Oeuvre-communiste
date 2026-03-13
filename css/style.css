@@ -1,0 +1,975 @@
+/* ============================================================
+   style.css — Histoire des Batailles & Conflits Mondiaux
+   Design : "Historique Moderne" — sombre, élégant, sobre
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. VARIABLES & RESET
+   ------------------------------------------------------------ */
+
+:root {
+  /* Palette */
+  --couleur-fond:        #0d0d0d;
+  --couleur-surface:     #1a1a1a;
+  --couleur-surface-2:   #222222;
+  --couleur-bordure:     #2e2e2e;
+  --couleur-accent:      #c9a84c;
+  --couleur-accent-dim:  #8a6f2e;
+  --couleur-accent-2:    #8b0000;
+  --couleur-texte:       #e8e0d0;
+  --couleur-texte-dim:   #7a7060;
+
+  /* Typographie */
+  --police-titre:  'Playfair Display', Georgia, 'Times New Roman', serif;
+  --police-corps:  'Source Sans Pro', 'Segoe UI', system-ui, sans-serif;
+  --taille-base:   16px;
+  --interligne:    1.6;
+
+  /* Espacements */
+  --espace-xs:  0.25rem;
+  --espace-s:   0.5rem;
+  --espace-m:   1rem;
+  --espace-l:   2rem;
+  --espace-xl:  3rem;
+  --espace-xxl: 5rem;
+
+  /* Rayons */
+  --rayon-s: 3px;
+  --rayon-m: 6px;
+
+  /* Transitions */
+  --transition: 0.25s ease;
+
+  /* Largeur contenu */
+  --largeur-max: 1200px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: var(--taille-base);
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--couleur-fond);
+  color: var(--couleur-texte);
+  font-family: var(--police-corps);
+  line-height: var(--interligne);
+  min-height: 100vh;
+}
+
+/* ------------------------------------------------------------
+   2. TYPOGRAPHIE
+   ------------------------------------------------------------ */
+
+h1, h2, h3, h4 {
+  font-family: var(--police-titre);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--couleur-texte);
+}
+
+h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); }
+h2 { font-size: clamp(1.4rem, 3vw, 2rem); }
+h3 { font-size: clamp(1.1rem, 2vw, 1.4rem); }
+h4 { font-size: 1rem; letter-spacing: 0.05em; text-transform: uppercase; }
+
+p {
+  margin-bottom: var(--espace-m);
+  color: var(--couleur-texte);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+a {
+  color: var(--couleur-accent);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+a:hover {
+  color: var(--couleur-texte);
+}
+
+strong {
+  color: var(--couleur-accent);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------
+   3. UTILITAIRES
+   ------------------------------------------------------------ */
+
+.conteneur {
+  width: 100%;
+  max-width: var(--largeur-max);
+  margin: 0 auto;
+  padding: 0 var(--espace-l);
+}
+
+/* Séparateur ornemental */
+.separateur {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-m);
+  margin: var(--espace-l) 0;
+  color: var(--couleur-accent-dim);
+  font-family: var(--police-titre);
+  font-size: 1.2rem;
+  letter-spacing: 0.2em;
+}
+
+.separateur::before,
+.separateur::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--couleur-accent-dim), transparent);
+}
+
+/* Badge importance */
+.badge {
+  display: inline-block;
+  padding: 0.15em 0.6em;
+  font-size: 0.7rem;
+  font-family: var(--police-corps);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: var(--rayon-s);
+  white-space: nowrap;
+}
+
+.badge-decisive {
+  background-color: rgba(139, 0, 0, 0.25);
+  color: #e05555;
+  border: 1px solid rgba(139, 0, 0, 0.5);
+}
+
+.badge-majeure {
+  background-color: rgba(201, 168, 76, 0.15);
+  color: var(--couleur-accent);
+  border: 1px solid rgba(201, 168, 76, 0.4);
+}
+
+.badge-notable {
+  background-color: rgba(122, 112, 96, 0.15);
+  color: var(--couleur-texte-dim);
+  border: 1px solid rgba(122, 112, 96, 0.4);
+}
+
+/* Icône ornementale */
+.ornement {
+  color: var(--couleur-accent-dim);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* ------------------------------------------------------------
+   4. EN-TÊTE DU SITE
+   ------------------------------------------------------------ */
+
+.site-entete {
+  position: relative;
+  background-color: var(--couleur-surface);
+  border-bottom: 1px solid var(--couleur-bordure);
+  padding: var(--espace-xl) 0 var(--espace-l);
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Texture de fond subtile */
+.site-entete::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(201, 168, 76, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 50%, rgba(139, 0, 0, 0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.site-entete__surtitre {
+  font-family: var(--police-corps);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--couleur-accent);
+  margin-bottom: var(--espace-s);
+}
+
+.site-entete__titre {
+  margin-bottom: var(--espace-s);
+}
+
+/* Ligne décorative sous le titre */
+.site-entete__titre::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--couleur-accent), transparent);
+  margin: var(--espace-m) auto 0;
+}
+
+.site-entete__sous-titre {
+  color: var(--couleur-texte-dim);
+  font-size: 1rem;
+  max-width: 500px;
+  margin: var(--espace-m) auto 0;
+}
+
+/* ------------------------------------------------------------
+   5. NAVIGATION / BARRE DE RETOUR
+   ------------------------------------------------------------ */
+
+.barre-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-m);
+  padding: var(--espace-m) 0;
+  border-bottom: 1px solid var(--couleur-bordure);
+  margin-bottom: var(--espace-l);
+}
+
+.btn-retour {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-s);
+  color: var(--couleur-texte-dim);
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  transition: color var(--transition);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--police-corps);
+}
+
+.btn-retour:hover {
+  color: var(--couleur-accent);
+}
+
+.btn-retour__fleche {
+  font-size: 1rem;
+  transition: transform var(--transition);
+}
+
+.btn-retour:hover .btn-retour__fleche {
+  transform: translateX(-3px);
+}
+
+/* ------------------------------------------------------------
+   6. FRISE CHRONOLOGIQUE
+   ------------------------------------------------------------ */
+
+.frise {
+  background-color: var(--couleur-surface);
+  border-top: 1px solid var(--couleur-bordure);
+  border-bottom: 1px solid var(--couleur-bordure);
+  padding: var(--espace-m) 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Dégradés de fondu sur les bords */
+.frise::before,
+.frise::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.frise::before {
+  left: 0;
+  background: linear-gradient(to right, var(--couleur-surface), transparent);
+}
+
+.frise::after {
+  right: 0;
+  background: linear-gradient(to left, var(--couleur-surface), transparent);
+}
+
+.frise__piste {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  padding: var(--espace-s) var(--espace-xl);
+  cursor: grab;
+  user-select: none;
+}
+
+.frise__piste::-webkit-scrollbar {
+  display: none;
+}
+
+.frise__piste:active {
+  cursor: grabbing;
+}
+
+/* Axe de la frise */
+.frise__axe {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.frise__axe::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, var(--couleur-bordure), var(--couleur-accent-dim), var(--couleur-bordure));
+  transform: translateY(-50%);
+  z-index: 0;
+}
+
+/* Élément de la frise */
+.frise__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espace-s);
+  min-width: 140px;
+  padding: var(--espace-s);
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  transition: transform var(--transition);
+}
+
+.frise__item:hover {
+  transform: translateY(-2px);
+}
+
+.frise__item--actif .frise__point {
+  background-color: var(--couleur-accent);
+  box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.2);
+}
+
+.frise__point {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--couleur-bordure);
+  border: 2px solid var(--couleur-accent-dim);
+  transition: background-color var(--transition), box-shadow var(--transition);
+  flex-shrink: 0;
+}
+
+.frise__item:hover .frise__point {
+  background-color: var(--couleur-accent);
+}
+
+.frise__date {
+  font-family: var(--police-titre);
+  font-size: 0.8rem;
+  color: var(--couleur-accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.frise__nom {
+  font-size: 0.7rem;
+  color: var(--couleur-texte-dim);
+  text-align: center;
+  line-height: 1.3;
+  max-width: 110px;
+  transition: color var(--transition);
+}
+
+.frise__item:hover .frise__nom {
+  color: var(--couleur-texte);
+}
+
+/* ------------------------------------------------------------
+   7. BARRE DE FILTRES
+   ------------------------------------------------------------ */
+
+.barre-filtres {
+  background-color: var(--couleur-surface);
+  border-bottom: 1px solid var(--couleur-bordure);
+  padding: var(--espace-m) 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.barre-filtres__interieur {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espace-m);
+}
+
+/* Champ de recherche */
+.champ-recherche {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.champ-recherche__icone {
+  position: absolute;
+  left: var(--espace-m);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--couleur-texte-dim);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+#champ-recherche {
+  width: 100%;
+  background-color: var(--couleur-fond);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon-m);
+  color: var(--couleur-texte);
+  font-family: var(--police-corps);
+  font-size: 0.875rem;
+  padding: 0.55em 1em 0.55em 2.4em;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+}
+
+#champ-recherche::placeholder {
+  color: var(--couleur-texte-dim);
+}
+
+#champ-recherche:focus {
+  border-color: var(--couleur-accent-dim);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
+}
+
+/* Selects */
+.filtre-select {
+  background-color: var(--couleur-fond);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon-m);
+  color: var(--couleur-texte);
+  font-family: var(--police-corps);
+  font-size: 0.875rem;
+  padding: 0.55em 2em 0.55em 0.85em;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7060' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7em center;
+}
+
+.filtre-select:focus,
+.filtre-select:hover {
+  border-color: var(--couleur-accent-dim);
+}
+
+.filtre-select option {
+  background-color: var(--couleur-surface);
+}
+
+/* Compteur de résultats */
+.compteur-resultats {
+  font-size: 0.8rem;
+  color: var(--couleur-texte-dim);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.compteur-resultats span {
+  color: var(--couleur-accent);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------
+   8. GRILLE DE CARTES
+   ------------------------------------------------------------ */
+
+.section-batailles {
+  padding: var(--espace-l) 0 var(--espace-xxl);
+}
+
+.grille-batailles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--espace-l);
+  margin-top: var(--espace-l);
+}
+
+/* Message "aucun résultat" */
+.message-vide {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--espace-xxl) 0;
+  color: var(--couleur-texte-dim);
+}
+
+.message-vide__icone {
+  font-size: 2.5rem;
+  margin-bottom: var(--espace-m);
+  opacity: 0.4;
+}
+
+.message-vide__titre {
+  font-family: var(--police-titre);
+  font-size: 1.2rem;
+  color: var(--couleur-texte-dim);
+  margin-bottom: var(--espace-s);
+}
+
+/* ------------------------------------------------------------
+   9. CARTE DE BATAILLE
+   ------------------------------------------------------------ */
+
+.carte-bataille {
+  background-color: var(--couleur-surface);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon-m);
+  padding: var(--espace-l);
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    transform var(--transition),
+    box-shadow var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-m);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Barre colorée sur le bord gauche */
+.carte-bataille::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--couleur-bordure);
+  transition: background-color var(--transition);
+}
+
+.carte-bataille:hover::before {
+  background-color: var(--couleur-accent);
+}
+
+.carte-bataille:hover {
+  border-color: var(--couleur-accent-dim);
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(201, 168, 76, 0.1);
+}
+
+/* En-tête de la carte */
+.carte-bataille__entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espace-m);
+}
+
+.carte-bataille__date {
+  font-family: var(--police-titre);
+  font-size: 0.85rem;
+  color: var(--couleur-accent);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.carte-bataille__nom {
+  font-family: var(--police-titre);
+  font-size: 1.15rem;
+  color: var(--couleur-texte);
+  line-height: 1.3;
+  margin: var(--espace-xs) 0;
+}
+
+.carte-bataille__conflit {
+  font-size: 0.75rem;
+  color: var(--couleur-texte-dim);
+  letter-spacing: 0.03em;
+}
+
+/* Corps de la carte */
+.carte-bataille__corps {
+  flex: 1;
+}
+
+.carte-bataille__description {
+  font-size: 0.875rem;
+  color: var(--couleur-texte-dim);
+  line-height: 1.55;
+  /* Limite à 3 lignes */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+/* Métadonnées */
+.carte-bataille__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espace-s);
+  padding-top: var(--espace-m);
+  border-top: 1px solid var(--couleur-bordure);
+}
+
+.carte-bataille__lieu {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-xs);
+  font-size: 0.75rem;
+  color: var(--couleur-texte-dim);
+}
+
+.carte-bataille__lieu-icone {
+  color: var(--couleur-accent-dim);
+}
+
+.carte-bataille__vainqueur {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--couleur-texte-dim);
+}
+
+.carte-bataille__vainqueur strong {
+  color: var(--couleur-texte);
+  font-size: inherit;
+}
+
+/* ------------------------------------------------------------
+   10. PAGE DÉTAIL D'UNE BATAILLE
+   ------------------------------------------------------------ */
+
+.page-detail {
+  padding-bottom: var(--espace-xxl);
+}
+
+/* En-tête de la bataille */
+.detail-entete {
+  padding: var(--espace-xl) 0 var(--espace-l);
+  border-bottom: 1px solid var(--couleur-bordure);
+  position: relative;
+}
+
+.detail-entete::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background-color: var(--couleur-accent);
+}
+
+.detail-entete__surtitre {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-m);
+  margin-bottom: var(--espace-m);
+  flex-wrap: wrap;
+}
+
+.detail-entete__date {
+  font-family: var(--police-titre);
+  font-size: 1rem;
+  color: var(--couleur-accent);
+  font-weight: 700;
+}
+
+.detail-entete__conflit {
+  font-size: 0.8rem;
+  color: var(--couleur-texte-dim);
+  letter-spacing: 0.05em;
+}
+
+.detail-entete__titre {
+  margin-bottom: var(--espace-m);
+}
+
+.detail-entete__lieu {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-s);
+  font-size: 0.9rem;
+  color: var(--couleur-texte-dim);
+}
+
+/* Corps du détail */
+.detail-corps {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--espace-xl);
+  margin-top: var(--espace-xl);
+  align-items: start;
+}
+
+/* Colonne principale */
+.detail-principal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-l);
+}
+
+.detail-section__titre {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-m);
+  margin-bottom: var(--espace-m);
+  color: var(--couleur-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.detail-section__titre::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--couleur-bordure);
+}
+
+.detail-section__texte {
+  color: var(--couleur-texte);
+  font-size: 0.975rem;
+  line-height: 1.75;
+}
+
+/* Colonne latérale — fiche récapitulative */
+.detail-fiche {
+  background-color: var(--couleur-surface);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon-m);
+  overflow: hidden;
+  position: sticky;
+  top: calc(var(--espace-l) + 60px);
+}
+
+.detail-fiche__titre {
+  background-color: var(--couleur-surface-2);
+  border-bottom: 1px solid var(--couleur-bordure);
+  padding: var(--espace-m) var(--espace-l);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--couleur-accent);
+}
+
+.detail-fiche__contenu {
+  padding: 0;
+}
+
+.detail-fiche__ligne {
+  display: flex;
+  gap: var(--espace-m);
+  padding: var(--espace-m) var(--espace-l);
+  border-bottom: 1px solid var(--couleur-bordure);
+}
+
+.detail-fiche__ligne:last-child {
+  border-bottom: none;
+}
+
+.detail-fiche__cle {
+  font-size: 0.75rem;
+  color: var(--couleur-texte-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  min-width: 90px;
+  flex-shrink: 0;
+  padding-top: 0.1em;
+}
+
+.detail-fiche__valeur {
+  font-size: 0.875rem;
+  color: var(--couleur-texte);
+  line-height: 1.4;
+}
+
+/* Belligérants */
+.detail-belligerants {
+  background-color: var(--couleur-surface);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: var(--rayon-m);
+  padding: var(--espace-l);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--espace-m);
+  text-align: center;
+}
+
+.belligerant__label {
+  font-size: 0.65rem;
+  color: var(--couleur-texte-dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: var(--espace-xs);
+}
+
+.belligerant__nom {
+  font-family: var(--police-titre);
+  font-size: 1rem;
+  color: var(--couleur-texte);
+  line-height: 1.3;
+}
+
+.belligerant--vainqueur .belligerant__nom {
+  color: var(--couleur-accent);
+}
+
+.belligerant__couronne {
+  font-size: 1rem;
+  display: block;
+  margin-bottom: var(--espace-xs);
+}
+
+.vs-separateur {
+  font-family: var(--police-titre);
+  font-size: 1.5rem;
+  color: var(--couleur-accent-2);
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+/* ------------------------------------------------------------
+   11. MESSAGE D'ERREUR (bataille non trouvée)
+   ------------------------------------------------------------ */
+
+.page-erreur {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  text-align: center;
+  padding: var(--espace-xxl) var(--espace-l);
+}
+
+.page-erreur__code {
+  font-family: var(--police-titre);
+  font-size: 5rem;
+  color: var(--couleur-bordure);
+  line-height: 1;
+  margin-bottom: var(--espace-m);
+}
+
+.page-erreur__titre {
+  font-size: 1.3rem;
+  color: var(--couleur-texte-dim);
+  margin-bottom: var(--espace-s);
+}
+
+.page-erreur__message {
+  font-size: 0.9rem;
+  color: var(--couleur-texte-dim);
+  max-width: 380px;
+  margin-bottom: var(--espace-l);
+}
+
+/* ------------------------------------------------------------
+   12. PIED DE PAGE
+   ------------------------------------------------------------ */
+
+.site-pied {
+  border-top: 1px solid var(--couleur-bordure);
+  padding: var(--espace-l) 0;
+  text-align: center;
+  color: var(--couleur-texte-dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.site-pied__ornement {
+  color: var(--couleur-accent-dim);
+  margin: 0 var(--espace-s);
+}
+
+/* ------------------------------------------------------------
+   13. RESPONSIVE
+   ------------------------------------------------------------ */
+
+@media (max-width: 900px) {
+  .detail-corps {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-fiche {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .conteneur {
+    padding: 0 var(--espace-m);
+  }
+
+  .grille-batailles {
+    grid-template-columns: 1fr;
+  }
+
+  .barre-filtres__interieur {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .champ-recherche {
+    min-width: unset;
+  }
+
+  .compteur-resultats {
+    margin-left: 0;
+  }
+
+  .detail-belligerants {
+    grid-template-columns: 1fr;
+    gap: var(--espace-s);
+  }
+
+  .vs-separateur {
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .site-entete {
+    padding: var(--espace-l) 0 var(--espace-m);
+  }
+
+  .carte-bataille {
+    padding: var(--espace-m);
+  }
+
+  .detail-entete__surtitre {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--espace-xs);
+  }
+}

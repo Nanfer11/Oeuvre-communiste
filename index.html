@@ -31,15 +31,36 @@
   </header>
 
   <!-- ======================================================
-       FRISE CHRONOLOGIQUE
+       FRISE CHRONOLOGIQUE MULTI-NIVEAUX
        ====================================================== -->
-  <section class="frise" aria-label="Frise chronologique des batailles">
-    <div class="frise__piste" id="frise-piste" role="list">
-      <div class="frise__axe" id="frise-axe">
-        <!-- Généré dynamiquement par construireFrise() dans app.js -->
+  <section class="frise-multi" id="frise-multi" aria-label="Frise chronologique multi-niveaux">
+    <div class="frise-multi__controles">
+      <button class="frise-zoom__btn" id="frise-zoom-moins" aria-label="Dézoomer">−</button>
+      <span class="frise-zoom__label" id="frise-zoom-label">×1</span>
+      <button class="frise-zoom__btn" id="frise-zoom-plus" aria-label="Zoomer">+</button>
+    </div>
+    <div class="frise-multi__corps">
+      <div class="frise-niveaux-labels" id="frise-labels" aria-hidden="true">
+        <div class="frise-niveau-label frise-niveau-label--axe"></div>
+        <div class="frise-niveau-label">Civilisations</div>
+        <div class="frise-niveau-label">Modes de production</div>
+        <div class="frise-niveau-label">Conflits</div>
+        <div class="frise-niveau-label">Batailles</div>
+        <div class="frise-niveau-label">Révoltes</div>
+      </div>
+      <div class="frise-scroll-zone" id="frise-scroll-zone">
+        <div class="frise-scroll-contenu" id="frise-scroll-contenu">
+          <div class="frise-axe-temporel" id="frise-axe-temporel"></div>
+          <div class="frise-niveau" id="frise-niveau-civilisations"></div>
+          <div class="frise-niveau" id="frise-niveau-modes-production"></div>
+          <div class="frise-niveau" id="frise-niveau-conflits"></div>
+          <div class="frise-niveau" id="frise-niveau-batailles"></div>
+          <div class="frise-niveau" id="frise-niveau-revoltes"></div>
+        </div>
       </div>
     </div>
   </section>
+  <div class="frise-tooltip" id="frise-tooltip" aria-hidden="true"></div>
 
   <!-- ======================================================
        CONTENU PRINCIPAL

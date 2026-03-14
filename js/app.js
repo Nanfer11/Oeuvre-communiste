@@ -731,6 +731,551 @@ function afficherErreurBatailleIntrouvable(conteneur, id) {
 }
 
 /* ============================================================
+   FRISE MULTI-NIVEAUX — MOTEUR TEMPOREL
+   ============================================================ */
+
+let FRISE_DATE_MIN, FRISE_DATE_MAX;
+const PX_PAR_AN_BASE = 0.4;
+let niveauZoom = 2;
+
+/**
+ * Calcule les bornes temporelles globales à partir de tous les jeux de données.
+ */
+function calculerBornesTemporelles() {
+  const dates = [
+    ...civilisations.flatMap(c => [c.dateDebut, c.dateFin]),
+    ...modesProduction.flatMap(m => [m.dateDebut, m.dateFin]),
+    ...conflits.flatMap(c => [c.dateDebut, c.dateFin]),
+    ...batailles.flatMap(b => [b.dateDebut ?? b.date, b.dateFin ?? b.date]),
+    ...revoltes.flatMap(r => [r.dateDebut, r.dateFin]),
+  ];
+  FRISE_DATE_MIN = Math.min(...dates) - 50;
+  FRISE_DATE_MAX = Math.max(...dates) + 50;
+}
+
+function largeurFrise() {
+  return Math.round((FRISE_DATE_MAX - FRISE_DATE_MIN) * PX_PAR_AN_BASE * niveauZoom);
+}
+
+function anneeVersPixels(annee) {
+  return Math.round((annee - FRISE_DATE_MIN) * PX_PAR_AN_BASE * niveauZoom);
+}
+
+function dureeVersPixels(debut, fin) {
+  return Math.max(Math.round((fin - debut) * PX_PAR_AN_BASE * niveauZoom), 10);
+}
+
+/* ============================================================
+   FRISE MULTI-NIVEAUX — AXE TEMPOREL
+   ============================================================ */
+
+/**
+ * Construit l'axe avec graduations (siècle = marque majeure, décennie = mineure).
+ */
+function construireAxeTemporel() {
+  const axe = document.getElementById('frise-axe-temporel');
+  if (!axe) return;
+  axe.innerHTML = '';
+
+  const fragment = document.createDocumentFragment();
+
+  // Intervalle adaptatif selon le zoom
+  const anneesVisibles = (FRISE_DATE_MAX - FRISE_DATE_MIN) / niveauZoom;
+  let pasMineur, pasMajeur;
+  if (anneesVisibles > 5000) {
+    pasMineur = 500; pasMajeur = 1000;
+  } else if (anneesVisibles > 2000) {
+    pasMineur = 100; pasMajeur = 500;
+  } else if (anneesVisibles > 500) {
+    pasMineur = 50; pasMajeur = 100;
+  } else if (anneesVisibles > 200) {
+    pasMineur = 10; pasMajeur = 50;
+  } else {
+    pasMineur = 5; pasMajeur = 25;
+  }
+
+  // Première marque alignée sur le pas
+  const debut = Math.ceil(FRISE_DATE_MIN / pasMineur) * pasMineur;
+
+  for (let annee = debut; annee <= FRISE_DATE_MAX; annee += pasMineur) {
+    const estMajeure = annee % pasMajeur === 0;
+    const marque = document.createElement('div');
+    marque.className = 'frise-marque' + (estMajeure ? ' frise-marque--majeure' : '');
+    marque.style.left = anneeVersPixels(annee) + 'px';
+
+    if (estMajeure) {
+      const label = document.createElement('span');
+      label.className = 'frise-marque__label';
+      label.textContent = annee < 0 ? `${Math.abs(annee)} av.` : String(annee);
+      marque.appendChild(label);
+    }
+
+    fragment.appendChild(marque);
+  }
+
+  axe.appendChild(fragment);
+}
+
+/* ============================================================
+   FRISE MULTI-NIVEAUX — RENDU DES NIVEAUX
+   ============================================================ */
+
+/**
+ * Trouve un objet dans tous les jeux de données par type et id.
+ * @param {string} type
+ * @param {string} id
+ * @returns {Object|null}
+ */
+function trouverObjetParTypeEtId(type, id) {
+  switch (type) {
+    case 'bataille':      return batailles.find(b => b.id === id) || null;
+    case 'civilisation':  return civilisations.find(c => c.id === id) || null;
+    case 'mode-production': return modesProduction.find(m => m.id === id) || null;
+    case 'conflit':       return conflits.find(c => c.id === id) || null;
+    case 'revolte':       return revoltes.find(r => r.id === id) || null;
+    default:              return null;
+  }
+}
+
+/**
+ * Crée un élément DOM positionné pour la frise.
+ * @param {Object} objet
+ * @returns {HTMLElement}
+ */
+function creerElementFrise(objet) {
+  const debut = objet.dateDebut ?? objet.date;
+  const fin   = objet.dateFin   ?? objet.date;
+  const duree = fin - debut;
+
+  const el = document.createElement('div');
+  el.className = 'frise-element' + (duree < 2 ? ' frise-element--point' : '');
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.dataset.id   = objet.id;
+  el.dataset.type = objet.type;
+  el.style.left  = anneeVersPixels(debut) + 'px';
+  el.style.width = dureeVersPixels(debut, fin) + 'px';
+
+  const label = objet.dateAfficheeDebut
+    ? `${objet.nom} (${objet.dateAfficheeDebut} – ${objet.dateAfficheeFin})`
+    : `${objet.nom} (${objet.dateAffichee || debut})`;
+  el.setAttribute('aria-label', label);
+
+  const nom = document.createElement('span');
+  nom.className = 'frise-element__nom';
+  nom.textContent = objet.nom;
+  el.appendChild(nom);
+
+  const url = objet.type === 'bataille'
+    ? `bataille.html?id=${encodeURIComponent(objet.id)}`
+    : `detail.html?type=${encodeURIComponent(objet.type)}&id=${encodeURIComponent(objet.id)}`;
+
+  el.addEventListener('click', () => { window.location.href = url; });
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.location.href = url;
+    }
+  });
+
+  return el;
+}
+
+/**
+ * Remplit un niveau de la frise avec ses données.
+ * @param {string} id
+ * @param {Array} donnees
+ */
+function construireNiveau(id, donnees) {
+  const niveau = document.getElementById('frise-niveau-' + id);
+  if (!niveau) return;
+  niveau.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+  donnees.forEach(objet => fragment.appendChild(creerElementFrise(objet)));
+  niveau.appendChild(fragment);
+}
+
+/**
+ * Point d'entrée — construit la frise multi-niveaux complète.
+ */
+function construireFriseMulti() {
+  calculerBornesTemporelles();
+
+  const contenu = document.getElementById('frise-scroll-contenu');
+  if (!contenu) return;
+  contenu.style.width = largeurFrise() + 'px';
+
+  construireAxeTemporel();
+  construireNiveau('civilisations',    civilisations);
+  construireNiveau('modes-production', modesProduction);
+  construireNiveau('conflits',         conflits);
+  construireNiveau('batailles',        batailles);
+  construireNiveau('revoltes',         revoltes);
+
+  activerScrollFriseMulti();
+  activerTooltipFrise();
+  brancherControlesZoom();
+  appliquerZoom(2);
+}
+
+/* ============================================================
+   FRISE MULTI-NIVEAUX — SCROLL & INTERACTION
+   ============================================================ */
+
+/**
+ * Active le glisser-déplacer sur la zone scrollable de la frise multi.
+ */
+function activerScrollFriseMulti() {
+  const zone = document.getElementById('frise-scroll-zone');
+  if (!zone) return;
+
+  let glissement = { actif: false, depart: 0, scrollDepart: 0 };
+
+  zone.addEventListener('mousedown', e => {
+    glissement = { actif: true, depart: e.clientX, scrollDepart: zone.scrollLeft };
+    zone.style.cursor = 'grabbing';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!glissement.actif) return;
+    zone.scrollLeft = glissement.scrollDepart - (e.clientX - glissement.depart);
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!glissement.actif) return;
+    glissement.actif = false;
+    zone.style.cursor = 'grab';
+  });
+}
+
+/**
+ * Active le tooltip au survol des éléments de la frise.
+ */
+function activerTooltipFrise() {
+  const tooltip = document.getElementById('frise-tooltip');
+  if (!tooltip) return;
+
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('.frise-element');
+    if (!el) return;
+    const objet = trouverObjetParTypeEtId(el.dataset.type, el.dataset.id);
+    if (!objet) return;
+
+    const debut = objet.dateAfficheeDebut || objet.dateAffichee || String(objet.dateDebut ?? objet.date);
+    const fin   = objet.dateAfficheeFin;
+    const periode = fin && fin !== debut ? `${debut} – ${fin}` : debut;
+
+    const typeLabels = {
+      'bataille':        'Bataille',
+      'civilisation':    'Civilisation',
+      'conflit':         'Conflit',
+      'mode-production': 'Mode de production',
+      'revolte':         'Révolte',
+    };
+
+    tooltip.innerHTML = '';
+
+    const spanType = document.createElement('div');
+    spanType.className = 'frise-tooltip__type';
+    spanType.textContent = typeLabels[objet.type] || objet.type;
+
+    const spanNom = document.createElement('div');
+    spanNom.className = 'frise-tooltip__nom';
+    spanNom.textContent = objet.nom;
+
+    const spanMeta = document.createElement('div');
+    spanMeta.className = 'frise-tooltip__meta';
+    spanMeta.textContent = periode;
+
+    tooltip.append(spanType, spanNom, spanMeta);
+    tooltip.classList.add('visible');
+  });
+
+  document.addEventListener('mousemove', e => {
+    const el = e.target.closest('.frise-element');
+    if (!el) {
+      tooltip.classList.remove('visible');
+      return;
+    }
+    tooltip.style.left = (e.clientX + 14) + 'px';
+    tooltip.style.top  = (e.clientY - 28) + 'px';
+  });
+
+  document.addEventListener('mouseout', e => {
+    if (!e.target.closest('.frise-element')) {
+      tooltip.classList.remove('visible');
+    }
+  });
+}
+
+/* ============================================================
+   FRISE MULTI-NIVEAUX — ZOOM
+   ============================================================ */
+
+/**
+ * Applique un facteur de zoom, repositionne tous les éléments.
+ * @param {number} facteur
+ */
+function appliquerZoom(facteur) {
+  niveauZoom = Math.min(Math.max(facteur, 0.25), 16);
+
+  const label = document.getElementById('frise-zoom-label');
+  if (label) label.textContent = '×' + niveauZoom;
+
+  const contenu = document.getElementById('frise-scroll-contenu');
+  if (contenu) contenu.style.width = largeurFrise() + 'px';
+
+  // Repositionner tous les éléments existants
+  document.querySelectorAll('.frise-element').forEach(el => {
+    const objet = trouverObjetParTypeEtId(el.dataset.type, el.dataset.id);
+    if (!objet) return;
+    const debut = objet.dateDebut ?? objet.date;
+    const fin   = objet.dateFin   ?? objet.date;
+    el.style.left  = anneeVersPixels(debut) + 'px';
+    el.style.width = dureeVersPixels(debut, fin) + 'px';
+  });
+
+  construireAxeTemporel();
+}
+
+/**
+ * Branche les boutons +/− de zoom.
+ */
+function brancherControlesZoom() {
+  const btnMoins = document.getElementById('frise-zoom-moins');
+  const btnPlus  = document.getElementById('frise-zoom-plus');
+
+  const pasZoom = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 12, 16];
+
+  if (btnMoins) {
+    btnMoins.addEventListener('click', () => {
+      const idx = pasZoom.indexOf(niveauZoom);
+      if (idx > 0) appliquerZoom(pasZoom[idx - 1]);
+    });
+  }
+
+  if (btnPlus) {
+    btnPlus.addEventListener('click', () => {
+      const idx = pasZoom.indexOf(niveauZoom);
+      if (idx < pasZoom.length - 1) appliquerZoom(pasZoom[idx + 1]);
+    });
+  }
+}
+
+/* ============================================================
+   PAGE DÉTAIL MULTI (detail.html)
+   ============================================================ */
+
+/**
+ * Lit ?type=&id= et dispatche vers le bon constructeur de template.
+ */
+function afficherPageDetailMulti() {
+  const params  = new URLSearchParams(window.location.search);
+  const type    = params.get('type');
+  const id      = params.get('id');
+  const conteneur = document.getElementById('detail-conteneur');
+  if (!conteneur) return;
+
+  const objet = trouverObjetParTypeEtId(type, id);
+
+  if (!objet) {
+    document.title = 'Élément introuvable — Histoire des Batailles';
+    const erreur = document.createElement('div');
+    erreur.className = 'page-erreur';
+    const code = document.createElement('div');
+    code.className = 'page-erreur__code';
+    code.setAttribute('aria-hidden', 'true');
+    code.textContent = '404';
+    const titre = document.createElement('p');
+    titre.className = 'page-erreur__titre';
+    titre.textContent = 'Élément introuvable';
+    const lienRetour = document.createElement('a');
+    lienRetour.href = 'index.html';
+    lienRetour.className = 'btn-retour';
+    lienRetour.innerHTML = '<span class="btn-retour__fleche" aria-hidden="true">←</span> Retour aux archives';
+    erreur.append(code, titre, lienRetour);
+    conteneur.appendChild(erreur);
+    return;
+  }
+
+  document.title = `${objet.nom} — Histoire des Batailles`;
+
+  switch (type) {
+    case 'civilisation':    construireDetailCivilisation(conteneur, objet);  break;
+    case 'conflit':         construireDetailConflit(conteneur, objet);       break;
+    case 'mode-production': construireDetailModeProduction(conteneur, objet); break;
+    case 'revolte':         construireDetailRevolte(conteneur, objet);       break;
+  }
+}
+
+/**
+ * Crée l'en-tête commun à toutes les pages détail multi.
+ * @param {Object} objet
+ * @param {string} labelType
+ * @param {string} couleurType
+ * @returns {HTMLElement}
+ */
+function creerEnteteDetailMulti(objet, labelType) {
+  const entete = document.createElement('header');
+  entete.className = 'detail-entete';
+
+  const typeEl = document.createElement('div');
+  typeEl.className = 'detail-multi-type';
+  typeEl.textContent = labelType;
+
+  const periode = document.createElement('div');
+  periode.className = 'detail-multi-periode';
+  const debut = objet.dateAfficheeDebut || String(objet.dateDebut);
+  const fin   = objet.dateAfficheeFin   || String(objet.dateFin);
+  periode.textContent = debut === fin ? debut : `${debut} – ${fin}`;
+
+  const titre = document.createElement('h1');
+  titre.className = 'detail-entete__titre';
+  titre.textContent = objet.nom;
+
+  entete.append(typeEl, periode, titre);
+  return entete;
+}
+
+/**
+ * Template — Civilisation
+ */
+function construireDetailCivilisation(conteneur, objet) {
+  conteneur.innerHTML = '';
+
+  const entete = creerEnteteDetailMulti(objet, 'Civilisation');
+
+  const lieu = document.createElement('div');
+  lieu.className = 'detail-entete__lieu';
+  lieu.textContent = `⚑ ${objet.region}${objet.capitale ? ' — Capitale : ' + objet.capitale : ''}`;
+  entete.appendChild(lieu);
+
+  const corps = document.createElement('div');
+  corps.className = 'detail-corps';
+
+  const principal = document.createElement('div');
+  principal.className = 'detail-principal';
+  principal.appendChild(creerSectionDetail('Présentation', objet.description));
+  principal.appendChild(creerSectionDetail('Héritage & conséquences', objet.consequence));
+
+  corps.appendChild(principal);
+  conteneur.append(entete, corps);
+}
+
+/**
+ * Template — Conflit
+ */
+function construireDetailConflit(conteneur, objet) {
+  conteneur.innerHTML = '';
+
+  const entete = creerEnteteDetailMulti(objet, 'Conflit');
+  const corps = document.createElement('div');
+  corps.className = 'detail-corps';
+
+  const principal = document.createElement('div');
+  principal.className = 'detail-principal';
+
+  // Bloc belligérants simplifié
+  const secBell = creerSectionDetail('Belligérants', null);
+  const blocBell = document.createElement('div');
+  blocBell.className = 'detail-belligerants';
+  const coteA = creerCoteBelligerant(objet.belligerants.a, objet.vainqueur === objet.belligerants.a);
+  const vs = document.createElement('div');
+  vs.className = 'vs-separateur';
+  vs.setAttribute('aria-hidden', 'true');
+  vs.textContent = 'VS';
+  const coteB = creerCoteBelligerant(objet.belligerants.b, objet.vainqueur === objet.belligerants.b);
+  blocBell.append(coteA, vs, coteB);
+  secBell.appendChild(blocBell);
+  principal.appendChild(secBell);
+
+  principal.appendChild(creerSectionDetail('Déroulement', objet.description));
+  principal.appendChild(creerSectionDetail('Conséquences historiques', objet.consequence));
+
+  // Batailles liées
+  if (objet.bataillesLiees && objet.bataillesLiees.length > 0) {
+    const secLiees = document.createElement('section');
+    secLiees.className = 'detail-batailles-liees';
+
+    const titreSec = document.createElement('h2');
+    titreSec.className = 'detail-batailles-liees__titre';
+    titreSec.textContent = 'Batailles de ce conflit';
+    secLiees.appendChild(titreSec);
+
+    const liste = document.createElement('ul');
+    liste.className = 'detail-batailles-liees__liste';
+
+    objet.bataillesLiees.forEach(batailleId => {
+      const b = batailles.find(x => x.id === batailleId);
+      if (!b) return;
+      const li = document.createElement('li');
+      const lien = document.createElement('a');
+      lien.href = `bataille.html?id=${encodeURIComponent(b.id)}`;
+      lien.className = 'detail-batailles-liees__lien';
+      lien.textContent = `${b.nom} — ${b.dateAffichee}`;
+      li.appendChild(lien);
+      liste.appendChild(li);
+    });
+
+    secLiees.appendChild(liste);
+    principal.appendChild(secLiees);
+  }
+
+  corps.appendChild(principal);
+  conteneur.append(entete, corps);
+}
+
+/**
+ * Template — Mode de production
+ */
+function construireDetailModeProduction(conteneur, objet) {
+  conteneur.innerHTML = '';
+
+  const entete = creerEnteteDetailMulti(objet, 'Mode de production');
+
+  const lieu = document.createElement('div');
+  lieu.className = 'detail-entete__lieu';
+  lieu.textContent = `⚑ ${objet.zone}`;
+  entete.appendChild(lieu);
+
+  const corps = document.createElement('div');
+  corps.className = 'detail-corps';
+
+  const principal = document.createElement('div');
+  principal.className = 'detail-principal';
+  principal.appendChild(creerSectionDetail('Caractéristiques', objet.description));
+  principal.appendChild(creerSectionDetail('Héritage & conséquences', objet.consequence));
+
+  corps.appendChild(principal);
+  conteneur.append(entete, corps);
+}
+
+/**
+ * Template — Révolte
+ */
+function construireDetailRevolte(conteneur, objet) {
+  conteneur.innerHTML = '';
+
+  const entete = creerEnteteDetailMulti(objet, 'Révolte');
+
+  const lieu = document.createElement('div');
+  lieu.className = 'detail-entete__lieu';
+  lieu.textContent = `⚑ ${objet.lieu}${objet.meneur ? ' — Meneur : ' + objet.meneur : ''}`;
+  entete.appendChild(lieu);
+
+  const corps = document.createElement('div');
+  corps.className = 'detail-corps';
+
+  const principal = document.createElement('div');
+  principal.className = 'detail-principal';
+  principal.appendChild(creerSectionDetail('Déroulement', objet.description));
+  principal.appendChild(creerSectionDetail('Conséquences historiques', objet.consequence));
+
+  corps.appendChild(principal);
+  conteneur.append(entete, corps);
+}
+
+/* ============================================================
    INITIALISATION
    ============================================================ */
 
@@ -738,18 +1283,21 @@ function afficherErreurBatailleIntrouvable(conteneur, id) {
  * Point d'entrée — détecte la page courante et initialise en conséquence.
  */
 function initialiser() {
-  const estPageDetail  = document.body.dataset.page === 'detail';
-  const estPageAccueil = document.body.dataset.page === 'accueil';
+  const page = document.body.dataset.page;
 
-  if (estPageAccueil) {
-    construireFrise();
+  if (page === 'accueil') {
+    construireFriseMulti();
     brancherControles();
     recalculerResultats();
     afficherBatailles();
   }
 
-  if (estPageDetail) {
+  if (page === 'detail') {
     afficherPageDetail();
+  }
+
+  if (page === 'detail-multi') {
+    afficherPageDetailMulti();
   }
 }
 

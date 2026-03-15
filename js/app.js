@@ -735,7 +735,9 @@ function afficherErreurBatailleIntrouvable(conteneur, id) {
    ============================================================ */
 
 let FRISE_DATE_MIN, FRISE_DATE_MAX;
-const PX_PAR_AN_BASE = 0.4;
+const PX_PAR_AN_BASE   = 0.4;
+const HAUTEUR_SOUS_LIGNE = 44; // px par sous-ligne de la frise
+const MARGE_SOUS_LIGNE   = 6;  // px de marge verticale dans chaque sous-ligne
 let niveauZoom = 2;
 
 /**
@@ -838,11 +840,38 @@ function trouverObjetParTypeEtId(type, id) {
 }
 
 /**
+ * Répartit les objets sur des couloirs sans chevauchement (algorithme greedy).
+ * @param {Array} donnees
+ * @returns {Array<{objet: Object, ligne: number}>}
+ */
+function calculerSousLignes(donnees) {
+  const tries = [...donnees].sort((a, b) =>
+    (a.dateDebut ?? a.date) - (b.dateDebut ?? b.date)
+  );
+  const couloirs = []; // couloirs[i] = { fin: number, objets: [] }
+
+  tries.forEach(objet => {
+    const debut = objet.dateDebut ?? objet.date;
+    const fin   = objet.dateFin   ?? objet.date;
+    const idx   = couloirs.findIndex(c => debut >= c.fin);
+    if (idx !== -1) {
+      couloirs[idx].fin = fin;
+      couloirs[idx].objets.push({ objet, ligne: idx });
+    } else {
+      couloirs.push({ fin, objets: [{ objet, ligne: couloirs.length }] });
+    }
+  });
+
+  return couloirs.flatMap(c => c.objets);
+}
+
+/**
  * Crée un élément DOM positionné pour la frise.
  * @param {Object} objet
+ * @param {number} ligne — index de sous-ligne (0 = première ligne)
  * @returns {HTMLElement}
  */
-function creerElementFrise(objet) {
+function creerElementFrise(objet, ligne = 0) {
   const debut = objet.dateDebut ?? objet.date;
   const fin   = objet.dateFin   ?? objet.date;
   const duree = fin - debut;
@@ -853,8 +882,10 @@ function creerElementFrise(objet) {
   el.setAttribute('tabindex', '0');
   el.dataset.id   = objet.id;
   el.dataset.type = objet.type;
-  el.style.left  = anneeVersPixels(debut) + 'px';
-  el.style.width = dureeVersPixels(debut, fin) + 'px';
+  el.style.left   = anneeVersPixels(debut) + 'px';
+  el.style.width  = dureeVersPixels(debut, fin) + 'px';
+  el.style.top    = (ligne * HAUTEUR_SOUS_LIGNE + MARGE_SOUS_LIGNE) + 'px';
+  el.style.height = (HAUTEUR_SOUS_LIGNE - 2 * MARGE_SOUS_LIGNE) + 'px';
 
   const label = objet.dateAfficheeDebut
     ? `${objet.nom} (${objet.dateAfficheeDebut} – ${objet.dateAfficheeFin})`
@@ -890,8 +921,19 @@ function construireNiveau(id, donnees) {
   const niveau = document.getElementById('frise-niveau-' + id);
   if (!niveau) return;
   niveau.innerHTML = '';
+
+  const placements = calculerSousLignes(donnees);
+  const nbLignes   = placements.reduce((max, p) => Math.max(max, p.ligne + 1), 1);
+  const hauteurPx  = nbLignes * HAUTEUR_SOUS_LIGNE;
+
+  niveau.style.height = hauteurPx + 'px';
+  const label = document.querySelector(`.frise-niveau-label[data-niveau="${id}"]`);
+  if (label) label.style.height = hauteurPx + 'px';
+
   const fragment = document.createDocumentFragment();
-  donnees.forEach(objet => fragment.appendChild(creerElementFrise(objet)));
+  placements.forEach(({ objet, ligne }) =>
+    fragment.appendChild(creerElementFrise(objet, ligne))
+  );
   niveau.appendChild(fragment);
 }
 
@@ -915,6 +957,7 @@ function construireFriseMulti() {
   activerScrollFriseMulti();
   activerTooltipFrise();
   brancherControlesZoom();
+  brancherToggleNiveaux();
   appliquerZoom(2);
 }
 
@@ -988,6 +1031,20 @@ function activerTooltipFrise() {
     spanMeta.textContent = periode;
 
     tooltip.append(spanType, spanNom, spanMeta);
+
+    // Ligne lieu + meneur pour les conflits et révoltes
+    if (objet.lieu) {
+      const spanLieu = document.createElement('div');
+      spanLieu.className = 'frise-tooltip__meta';
+      spanLieu.textContent = objet.lieu;
+      tooltip.appendChild(spanLieu);
+    }
+    if (objet.meneur) {
+      const spanMeneur = document.createElement('div');
+      spanMeneur.className = 'frise-tooltip__meta';
+      spanMeneur.textContent = 'Meneur : ' + objet.meneur;
+      tooltip.appendChild(spanMeneur);
+    }
     tooltip.classList.add('visible');
   });
 
@@ -1036,6 +1093,24 @@ function appliquerZoom(facteur) {
   });
 
   construireAxeTemporel();
+}
+
+/**
+ * Branche les boutons toggle de visibilité sur chaque niveau de la frise.
+ */
+function brancherToggleNiveaux() {
+  document.querySelectorAll('.frise-toggle__btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id      = btn.dataset.niveau;
+      const niveau  = document.getElementById('frise-niveau-' + id);
+      const label   = document.querySelector(`.frise-niveau-label[data-niveau="${id}"]`);
+      const visible = btn.getAttribute('aria-pressed') === 'true';
+
+      btn.setAttribute('aria-pressed', visible ? 'false' : 'true');
+      niveau?.classList.toggle('frise-niveau--masque', visible);
+      label?.classList.toggle('frise-niveau-label--masque', visible);
+    });
+  });
 }
 
 /**

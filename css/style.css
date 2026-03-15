@@ -980,7 +980,7 @@ strong {
 
 :root {
   --hauteur-niveau: 70px;
-  --hauteur-axe:    32px;
+  --hauteur-axe:    48px;
   --largeur-labels: 160px;
 }
 
@@ -1027,6 +1027,58 @@ strong {
   font-family: var(--police-corps);
 }
 
+.frise-controles__sep {
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  background: var(--couleur-bordure);
+  margin: 0 var(--espace-xs);
+  flex-shrink: 0;
+}
+
+.frise-toggle__btn {
+  background: var(--couleur-surface-2);
+  border: 1px solid var(--couleur-bordure);
+  border-left-width: 2px;
+  color: var(--couleur-texte-dim);
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--rayon-s);
+  cursor: pointer;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--police-corps);
+  transition: border-color var(--transition), color var(--transition),
+              background var(--transition), opacity var(--transition);
+  white-space: nowrap;
+}
+
+.frise-toggle__btn--civilisations    { border-left-color: #4a3a8e; }
+.frise-toggle__btn--modes-production { border-left-color: #3a6a3a; }
+.frise-toggle__btn--conflits         { border-left-color: #8e2a2a; }
+.frise-toggle__btn--batailles        { border-left-color: var(--couleur-accent-dim); }
+.frise-toggle__btn--revoltes         { border-left-color: #7a5020; }
+
+.frise-toggle__btn[aria-pressed="true"] {
+  color: var(--couleur-texte);
+}
+
+.frise-toggle__btn[aria-pressed="false"] {
+  opacity: 0.4;
+  text-decoration: line-through;
+  text-decoration-color: var(--couleur-texte-dim);
+}
+
+.frise-toggle__btn:hover {
+  color: var(--couleur-texte);
+  background: #2a2a2a;
+  opacity: 1;
+}
+
+.frise-niveau--masque       { visibility: hidden; }
+.frise-niveau-label--masque { visibility: hidden; }
+
 /* Corps — labels fixes + zone scrollable */
 .frise-multi__corps {
   display: flex;
@@ -1047,7 +1099,7 @@ strong {
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--couleur-texte-dim);
+  color: var(--couleur-accent);
   border-right: 1px solid var(--couleur-bordure);
   border-bottom: 1px solid var(--couleur-bordure);
   font-family: var(--police-corps);
@@ -1092,33 +1144,31 @@ strong {
 }
 
 .frise-marque--majeure {
-  background: var(--couleur-accent-dim);
-  opacity: 0.5;
+  background: var(--couleur-accent);
+  opacity: 0.75;
 }
 
 .frise-marque__label {
   position: absolute;
-  bottom: 3px;
+  bottom: 6px;
   left: 3px;
-  font-size: 0.55rem;
+  font-size: 0.68rem;
   color: var(--couleur-texte-dim);
   white-space: nowrap;
   font-family: var(--police-corps);
   pointer-events: none;
 }
 
-/* Niveaux */
+/* Niveaux — hauteur définie dynamiquement par JS selon le nombre de sous-lignes */
 .frise-niveau {
   position: relative;
-  height: var(--hauteur-niveau);
+  overflow: hidden;
   border-bottom: 1px solid var(--couleur-bordure);
 }
 
-/* Éléments de la frise */
+/* Éléments de la frise — top et height définis dynamiquement par JS */
 .frise-element {
   position: absolute;
-  top: 10px;
-  height: calc(var(--hauteur-niveau) - 20px);
   border-radius: var(--rayon-s);
   background: var(--couleur-surface-2);
   border: 1px solid var(--couleur-bordure);
@@ -1163,6 +1213,8 @@ strong {
   color: var(--couleur-texte);
   font-family: var(--police-corps);
   pointer-events: none;
+  display: block;   /* requis pour text-overflow: ellipsis */
+  min-width: 0;     /* permet au flex item de rétrécir sous sa taille naturelle */
 }
 
 /* Couleurs par niveau */
@@ -1196,6 +1248,7 @@ strong {
   background: #401e1e;
 }
 
+
 #frise-niveau-batailles .frise-element {
   border-color: var(--couleur-accent-dim);
   background: #251e10;
@@ -1216,35 +1269,52 @@ strong {
   background: #382810;
 }
 
+/* Harmonisation : les révoltes courtes (même année) ont la classe --point
+   et s'affichent en cercle par défaut. On force toutes les révoltes en barre. */
+#frise-niveau-revoltes .frise-element--point {
+  width: 80px !important;
+  padding: 0 6px;         /* restaure le padding supprimé par .frise-element--point */
+  border-radius: var(--rayon-s);
+}
+
+#frise-niveau-revoltes .frise-element--point .frise-element__nom {
+  display: block;
+  min-width: 0;
+}
+
 /* Tooltip */
 .frise-tooltip {
   position: fixed;
   pointer-events: none;
   background: var(--couleur-surface-2);
   border: 1px solid var(--couleur-accent-dim);
+  border-top: 2px solid var(--couleur-accent);
   border-radius: var(--rayon-s);
-  padding: 7px 12px;
+  padding: 9px 14px;
   font-size: 0.75rem;
   color: var(--couleur-texte);
   z-index: 200;
-  max-width: 280px;
+  max-width: 320px;
   white-space: normal;
   line-height: 1.4;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
   font-family: var(--police-corps);
-  display: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 
 .frise-tooltip__type {
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--couleur-accent-dim);
-  margin-bottom: 2px;
+  color: var(--couleur-accent);
+  padding-bottom: 4px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid var(--couleur-bordure);
 }
 
 .frise-tooltip__nom {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--couleur-texte);
   font-weight: 600;
 }
@@ -1252,11 +1322,11 @@ strong {
 .frise-tooltip__meta {
   font-size: 0.7rem;
   color: var(--couleur-texte-dim);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .frise-tooltip.visible {
-  display: block;
+  opacity: 1;
 }
 
 /* === PAGE DÉTAIL MULTI (detail.html) === */

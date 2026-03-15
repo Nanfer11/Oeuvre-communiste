@@ -38,15 +38,33 @@
       <button class="frise-zoom__btn" id="frise-zoom-moins" aria-label="Dézoomer">−</button>
       <span class="frise-zoom__label" id="frise-zoom-label">×1</span>
       <button class="frise-zoom__btn" id="frise-zoom-plus" aria-label="Zoomer">+</button>
+
+      <span class="frise-controles__sep" aria-hidden="true"></span>
+
+      <button class="frise-toggle__btn frise-toggle__btn--civilisations"
+              data-niveau="civilisations"
+              aria-pressed="true" aria-label="Afficher/masquer le niveau Civilisations">Civilisations</button>
+      <button class="frise-toggle__btn frise-toggle__btn--modes-production"
+              data-niveau="modes-production"
+              aria-pressed="true" aria-label="Afficher/masquer le niveau Modes de production">Production</button>
+      <button class="frise-toggle__btn frise-toggle__btn--conflits"
+              data-niveau="conflits"
+              aria-pressed="true" aria-label="Afficher/masquer le niveau Conflits">Conflits</button>
+      <button class="frise-toggle__btn frise-toggle__btn--batailles"
+              data-niveau="batailles"
+              aria-pressed="true" aria-label="Afficher/masquer le niveau Batailles">Batailles</button>
+      <button class="frise-toggle__btn frise-toggle__btn--revoltes"
+              data-niveau="revoltes"
+              aria-pressed="true" aria-label="Afficher/masquer le niveau Révoltes">Révoltes</button>
     </div>
     <div class="frise-multi__corps">
       <div class="frise-niveaux-labels" id="frise-labels" aria-hidden="true">
         <div class="frise-niveau-label frise-niveau-label--axe"></div>
-        <div class="frise-niveau-label">Civilisations</div>
-        <div class="frise-niveau-label">Modes de production</div>
-        <div class="frise-niveau-label">Conflits</div>
-        <div class="frise-niveau-label">Batailles</div>
-        <div class="frise-niveau-label">Révoltes</div>
+        <div class="frise-niveau-label" data-niveau="civilisations">Civilisations</div>
+        <div class="frise-niveau-label" data-niveau="modes-production">Modes de production</div>
+        <div class="frise-niveau-label" data-niveau="conflits">Conflits</div>
+        <div class="frise-niveau-label" data-niveau="batailles">Batailles</div>
+        <div class="frise-niveau-label" data-niveau="revoltes">Révoltes</div>
       </div>
       <div class="frise-scroll-zone" id="frise-scroll-zone">
         <div class="frise-scroll-contenu" id="frise-scroll-contenu">

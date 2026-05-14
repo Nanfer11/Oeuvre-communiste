@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Praxis — Les modes de production : esclavage, féodalisme, capitalisme et leur logique interne selon la théorie matérialiste.">
+  <title>Modes de production — Praxis</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="modes-production">
+
+  <!-- ======================================================
+       NAVIGATION PRINCIPALE
+       ====================================================== -->
+  <nav class="nav-principale" role="navigation" aria-label="Sections principales">
+    <div class="conteneur">
+      <div class="nav-principale__barre">
+
+        <a href="index.html" class="nav-principale__logo" aria-label="Praxis — Accueil">
+          Praxis
+        </a>
+
+        <ul class="nav-principale__liste" role="list">
+          <li class="nav-principale__item">
+            <a href="modes-production.html"
+               class="nav-principale__lien nav-principale__lien--production"
+               aria-current="page">
+              <span class="nav-principale__icone" aria-hidden="true">⚒</span>
+              Modes de production
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="civilisations.html"
+               class="nav-principale__lien nav-principale__lien--civilisations">
+              <span class="nav-principale__icone" aria-hidden="true">◎</span>
+              Civilisations
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="conflits.html"
+               class="nav-principale__lien nav-principale__lien--conflits">
+              <span class="nav-principale__icone" aria-hidden="true">⚔</span>
+              Conflits &amp; Batailles
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="revoltes.html"
+               class="nav-principale__lien nav-principale__lien--revoltes">
+              <span class="nav-principale__icone" aria-hidden="true">⚑</span>
+              Révoltes
+            </a>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </nav>
+
+  <!-- ======================================================
+       EN-TÊTE DE SECTION
+       ====================================================== -->
+  <header class="entete-section" role="banner">
+    <div class="conteneur">
+      <div class="entete-section__interieur">
+        <span class="entete-section__icone" aria-hidden="true">⚒</span>
+        <div class="entete-section__texte">
+          <p class="entete-section__numero">I — Théorie matérialiste</p>
+          <h1 class="entete-section__titre">Modes de production</h1>
+          <p class="entete-section__description">
+            Les infrastructures économiques qui structurent chaque formation sociale —
+            de l'esclavage antique au capitalisme industriel.
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================
+       BARRE DE FILTRES
+       ====================================================== -->
+  <div class="barre-filtres" role="search" aria-label="Filtrer les modes de production">
+    <div class="conteneur">
+      <div class="barre-filtres__interieur">
+
+        <div class="champ-recherche">
+          <span class="champ-recherche__icone" aria-hidden="true">⚲</span>
+          <input
+            type="search"
+            id="champ-recherche"
+            name="recherche"
+            placeholder="Rechercher un mode de production…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Rechercher un mode de production"
+          >
+        </div>
+
+        <p class="compteur-resultats" aria-live="polite" aria-atomic="true">
+          <span id="compteur-resultats"></span>
+        </p>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       CONTENU PRINCIPAL
+       ====================================================== -->
+  <main id="contenu-principal">
+    <div class="section-liste">
+      <div class="conteneur">
+
+        <!--
+          Structure d'une carte générée par JS (afficherModesProduction()) :
+
+          <article class="carte-section" role="listitem">
+            <div class="carte-section__entete">
+              <h2 class="carte-section__titre">[Nom du mode]</h2>
+              <div class="carte-section__meta">
+                <span>[Période]</span>
+                <span class="carte-section__meta-sep" aria-hidden="true">·</span>
+                <span>[Région principale]</span>
+              </div>
+            </div>
+            <div class="carte-section__champs">
+              <div class="carte-section__champ">
+                <span class="carte-section__champ-titre">Définition</span>
+                <p class="carte-section__champ-texte">[définition]</p>
+              </div>
+              <blockquote class="carte-section__citation">
+                <p class="carte-section__citation-texte">« [citation Marx/Engels] »</p>
+                <footer class="carte-section__citation-source">— [auteur], [œuvre]</footer>
+              </blockquote>
+              <div class="carte-section__champ">
+                <span class="carte-section__champ-titre">Analyse</span>
+                <p class="carte-section__champ-texte">[analyse]</p>
+              </div>
+            </div>
+            <div class="carte-section__pied">
+              <span class="carte-section__champ-titre">Exemples</span>
+              <span class="tag">[exemple 1]</span>
+              <span class="tag">[exemple 2]</span>
+            </div>
+          </article>
+        -->
+
+        <div
+          class="grille-section"
+          id="grille-modes-production"
+          role="list"
+          aria-label="Modes de production"
+        >
+          <!-- Généré dynamiquement par afficherModesProduction() dans app.js -->
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ======================================================
+       PIED DE PAGE
+       ====================================================== -->
+  <footer class="site-pied" role="contentinfo">
+    <div class="conteneur">
+      <p>
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+        Praxis — Encyclopédie historico-matérialiste
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

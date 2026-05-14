@@ -124,6 +124,7 @@ function comparerBatailles(a, b) {
  */
 function recalculerResultats() {
   etat.resultats = batailles
+    .filter(b => b.type === 'bataille')
     .filter(correspondAuxFiltres)
     .sort(comparerBatailles);
 }

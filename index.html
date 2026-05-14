@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Encyclopédie des grandes batailles et conflits de l'histoire mondiale. Explorez Marathon, Thermopyles, Gaugamèles et bien d'autres.">
+  <meta name="description" content="Praxis — encyclopédie historico-matérialiste des modes de production, civilisations, conflits et révoltes à travers l'histoire mondiale.">
+  <title>Praxis — Encyclopédie historico-matérialiste</title>
 
-  <title>Histoire des Batailles &amp; Conflits Mondiaux</title>
-
-  <!-- Polices Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -18,149 +16,189 @@
 <body data-page="accueil">
 
   <!-- ======================================================
-       EN-TÊTE DU SITE
+       EN-TÊTE
        ====================================================== -->
   <header class="site-entete" role="banner">
     <div class="conteneur">
-      <p class="site-entete__surtitre">Encyclopédie historique</p>
-      <h1 class="site-entete__titre">Histoire des Batailles<br>&amp; Conflits Mondiaux</h1>
+      <p class="site-entete__surtitre">Encyclopédie historico-matérialiste</p>
+      <h1 class="site-entete__titre">Praxis</h1>
       <p class="site-entete__sous-titre">
-        Des guerres médiques aux conquêtes d'Alexandre — les batailles qui ont façonné l'histoire.
+        Modes de production, civilisations, conflits et révoltes —<br>
+        l'histoire universelle à travers le prisme de la lutte des classes.
       </p>
     </div>
   </header>
 
   <!-- ======================================================
-       FRISE CHRONOLOGIQUE MULTI-NIVEAUX
+       NAVIGATION PRINCIPALE
        ====================================================== -->
-  <section class="frise-multi" id="frise-multi" aria-label="Frise chronologique multi-niveaux">
-    <div class="frise-multi__controles">
-      <button class="frise-zoom__btn" id="frise-zoom-moins" aria-label="Dézoomer">−</button>
-      <span class="frise-zoom__label" id="frise-zoom-label">×1</span>
-      <button class="frise-zoom__btn" id="frise-zoom-plus" aria-label="Zoomer">+</button>
+  <nav class="nav-principale" role="navigation" aria-label="Sections principales">
+    <div class="conteneur">
+      <div class="nav-principale__barre">
 
-      <span class="frise-controles__sep" aria-hidden="true"></span>
+        <a href="index.html" class="nav-principale__logo" aria-label="Praxis — Accueil">
+          Praxis
+        </a>
 
-      <button class="frise-toggle__btn frise-toggle__btn--civilisations"
-              data-niveau="civilisations"
-              aria-pressed="true" aria-label="Afficher/masquer le niveau Civilisations">Civilisations</button>
-      <button class="frise-toggle__btn frise-toggle__btn--modes-production"
-              data-niveau="modes-production"
-              aria-pressed="true" aria-label="Afficher/masquer le niveau Modes de production">Production</button>
-      <button class="frise-toggle__btn frise-toggle__btn--conflits"
-              data-niveau="conflits"
-              aria-pressed="true" aria-label="Afficher/masquer le niveau Conflits">Conflits</button>
-      <button class="frise-toggle__btn frise-toggle__btn--batailles"
-              data-niveau="batailles"
-              aria-pressed="true" aria-label="Afficher/masquer le niveau Batailles">Batailles</button>
-      <button class="frise-toggle__btn frise-toggle__btn--revoltes"
-              data-niveau="revoltes"
-              aria-pressed="true" aria-label="Afficher/masquer le niveau Révoltes">Révoltes</button>
-    </div>
-    <div class="frise-multi__corps">
-      <div class="frise-niveaux-labels" id="frise-labels" aria-hidden="true">
-        <div class="frise-niveau-label frise-niveau-label--axe"></div>
-        <div class="frise-niveau-label" data-niveau="civilisations">Civilisations</div>
-        <div class="frise-niveau-label" data-niveau="modes-production">Modes de production</div>
-        <div class="frise-niveau-label" data-niveau="conflits">Conflits</div>
-        <div class="frise-niveau-label" data-niveau="batailles">Batailles</div>
-        <div class="frise-niveau-label" data-niveau="revoltes">Révoltes</div>
-      </div>
-      <div class="frise-scroll-zone" id="frise-scroll-zone">
-        <div class="frise-scroll-contenu" id="frise-scroll-contenu">
-          <div class="frise-axe-temporel" id="frise-axe-temporel"></div>
-          <div class="frise-niveau" id="frise-niveau-civilisations"></div>
-          <div class="frise-niveau" id="frise-niveau-modes-production"></div>
-          <div class="frise-niveau" id="frise-niveau-conflits"></div>
-          <div class="frise-niveau" id="frise-niveau-batailles"></div>
-          <div class="frise-niveau" id="frise-niveau-revoltes"></div>
-        </div>
+        <ul class="nav-principale__liste" role="list">
+          <li class="nav-principale__item">
+            <a href="modes-production.html"
+               class="nav-principale__lien nav-principale__lien--production">
+              <span class="nav-principale__icone" aria-hidden="true">⚒</span>
+              Modes de production
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="civilisations.html"
+               class="nav-principale__lien nav-principale__lien--civilisations">
+              <span class="nav-principale__icone" aria-hidden="true">◎</span>
+              Civilisations
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="conflits.html"
+               class="nav-principale__lien nav-principale__lien--conflits">
+              <span class="nav-principale__icone" aria-hidden="true">⚔</span>
+              Conflits &amp; Batailles
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="revoltes.html"
+               class="nav-principale__lien nav-principale__lien--revoltes">
+              <span class="nav-principale__icone" aria-hidden="true">⚑</span>
+              Révoltes
+            </a>
+          </li>
+        </ul>
+
       </div>
     </div>
-  </section>
-  <div class="frise-tooltip" id="frise-tooltip" aria-hidden="true"></div>
+  </nav>
 
   <!-- ======================================================
        CONTENU PRINCIPAL
        ====================================================== -->
   <main id="contenu-principal">
 
-    <!-- Barre de filtres (sticky) -->
-    <div class="barre-filtres" role="search" aria-label="Filtrer les batailles">
+    <!-- CITATIONS FONDATRICES -------------------------------- -->
+    <section class="section-citations" aria-label="Citations fondatrices">
       <div class="conteneur">
-        <div class="barre-filtres__interieur">
 
-          <!-- Recherche textuelle -->
-          <div class="champ-recherche">
-            <span class="champ-recherche__icone" aria-hidden="true">⚲</span>
-            <input
-              type="search"
-              id="champ-recherche"
-              name="recherche"
-              placeholder="Rechercher une bataille, un lieu, un conflit…"
-              autocomplete="off"
-              spellcheck="false"
-              aria-label="Rechercher une bataille"
-            >
-          </div>
+        <div class="citations-grille">
 
-          <!-- Filtre par époque -->
-          <select
-            id="filtre-epoque"
-            class="filtre-select"
-            aria-label="Filtrer par époque"
-          >
-            <option value="toutes">Toutes les époques</option>
-            <option value="antiquite">Antiquité</option>
-            <option value="moyen-age">Moyen Âge</option>
-            <option value="moderne">Époque moderne</option>
-            <option value="contemporaine">Époque contemporaine</option>
-            <option value="xxe">XXe siècle</option>
-          </select>
+          <blockquote class="citation">
+            <p class="citation__texte">
+              « L'histoire de toute société jusqu'à nos jours est l'histoire
+              de la lutte des classes. »
+            </p>
+            <footer class="citation__source">
+              <cite class="citation__auteur">Karl Marx &amp; Friedrich Engels</cite>
+              <span class="citation__oeuvre">Manifeste du Parti Communiste, 1848</span>
+            </footer>
+          </blockquote>
 
-          <!-- Filtre par importance -->
-          <select
-            id="filtre-importance"
-            class="filtre-select"
-            aria-label="Filtrer par importance"
-          >
-            <option value="toutes">Toute importance</option>
-            <option value="decisive">Décisive</option>
-            <option value="majeure">Majeure</option>
-            <option value="notable">Notable</option>
-          </select>
+          <blockquote class="citation">
+            <p class="citation__texte">
+              « Ce n'est pas la conscience des hommes qui détermine leur être ;
+              c'est, au contraire, leur être social qui détermine leur conscience. »
+            </p>
+            <footer class="citation__source">
+              <cite class="citation__auteur">Karl Marx</cite>
+              <span class="citation__oeuvre">Préface à la Contribution à la critique de l'économie politique, 1859</span>
+            </footer>
+          </blockquote>
 
-          <!-- Tri -->
-          <select
-            id="filtre-tri"
-            class="filtre-select"
-            aria-label="Trier les batailles"
-          >
-            <option value="date-asc">Date — croissante</option>
-            <option value="date-desc">Date — décroissante</option>
-            <option value="nom-asc">Nom — A → Z</option>
-            <option value="nom-desc">Nom — Z → A</option>
-          </select>
-
-          <!-- Compteur de résultats -->
-          <p class="compteur-resultats" aria-live="polite" aria-atomic="true">
-            <span id="compteur-resultats"></span>
-          </p>
+          <blockquote class="citation">
+            <p class="citation__texte">
+              « Les philosophes n'ont fait qu'interpréter le monde de différentes
+              manières ; ce qui importe, c'est de le transformer. »
+            </p>
+            <footer class="citation__source">
+              <cite class="citation__auteur">Karl Marx</cite>
+              <span class="citation__oeuvre">Thèses sur Feuerbach, XI, 1845</span>
+            </footer>
+          </blockquote>
 
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Grille des batailles -->
-    <section class="section-batailles" aria-label="Liste des batailles">
+    <!-- ACCÈS AUX 4 SECTIONS --------------------------------- -->
+    <section class="section-acces" aria-labelledby="acces-titre">
       <div class="conteneur">
-        <div
-          class="grille-batailles"
-          id="grille-batailles"
-          role="list"
-          aria-label="Cartes des batailles"
-        >
-          <!-- Généré dynamiquement par afficherBatailles() dans app.js -->
+
+        <h2 class="section-acces__titre" id="acces-titre">
+          <span class="section-acces__ligne" aria-hidden="true"></span>
+          Explorer les archives
+          <span class="section-acces__ligne" aria-hidden="true"></span>
+        </h2>
+
+        <div class="acces-grille">
+
+          <!-- I — Modes de production -->
+          <a href="modes-production.html" class="acces-carte acces-carte--production">
+            <div class="acces-carte__en-tete">
+              <span class="acces-carte__numero" aria-hidden="true">I</span>
+              <span class="acces-carte__icone" aria-hidden="true">⚒</span>
+            </div>
+            <div class="acces-carte__corps">
+              <h3 class="acces-carte__titre">Modes de production</h3>
+              <p class="acces-carte__description">
+                Les infrastructures économiques de l'histoire — esclavage,
+                féodalisme, capitalisme et leur logique interne.
+              </p>
+            </div>
+            <span class="acces-carte__fleche" aria-hidden="true">→</span>
+          </a>
+
+          <!-- II — Civilisations -->
+          <a href="civilisations.html" class="acces-carte acces-carte--civilisations">
+            <div class="acces-carte__en-tete">
+              <span class="acces-carte__numero" aria-hidden="true">II</span>
+              <span class="acces-carte__icone" aria-hidden="true">◎</span>
+            </div>
+            <div class="acces-carte__corps">
+              <h3 class="acces-carte__titre">Civilisations</h3>
+              <p class="acces-carte__description">
+                Les formations sociales à travers les âges, de la Mésopotamie
+                aux grandes puissances modernes.
+              </p>
+            </div>
+            <span class="acces-carte__fleche" aria-hidden="true">→</span>
+          </a>
+
+          <!-- III — Conflits & Batailles -->
+          <a href="conflits.html" class="acces-carte acces-carte--conflits">
+            <div class="acces-carte__en-tete">
+              <span class="acces-carte__numero" aria-hidden="true">III</span>
+              <span class="acces-carte__icone" aria-hidden="true">⚔</span>
+            </div>
+            <div class="acces-carte__corps">
+              <h3 class="acces-carte__titre">Conflits &amp; Batailles</h3>
+              <p class="acces-carte__description">
+                La guerre comme expression de la lutte des classes — des guerres
+                médiques aux conflits du XX<sup>e</sup> siècle.
+              </p>
+            </div>
+            <span class="acces-carte__fleche" aria-hidden="true">→</span>
+          </a>
+
+          <!-- IV — Révoltes -->
+          <a href="revoltes.html" class="acces-carte acces-carte--revoltes">
+            <div class="acces-carte__en-tete">
+              <span class="acces-carte__numero" aria-hidden="true">IV</span>
+              <span class="acces-carte__icone" aria-hidden="true">⚑</span>
+            </div>
+            <div class="acces-carte__corps">
+              <h3 class="acces-carte__titre">Révoltes</h3>
+              <p class="acces-carte__description">
+                Les soulèvements populaires, jacqueries et révolutions —
+                la résistance des classes opprimées face au pouvoir.
+              </p>
+            </div>
+            <span class="acces-carte__fleche" aria-hidden="true">→</span>
+          </a>
+
         </div>
       </div>
     </section>
@@ -174,13 +212,12 @@
     <div class="conteneur">
       <p>
         <span class="site-pied__ornement" aria-hidden="true">⚔</span>
-        Histoire des Batailles &amp; Conflits Mondiaux
+        Praxis — Encyclopédie historico-matérialiste
         <span class="site-pied__ornement" aria-hidden="true">⚔</span>
       </p>
     </div>
   </footer>
 
-  <!-- Scripts — data.js doit être chargé avant app.js -->
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
 

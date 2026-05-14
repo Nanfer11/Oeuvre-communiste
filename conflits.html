@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Praxis — La guerre comme expression de la lutte des classes, des guerres médiques aux conflits du XXe siècle.">
+  <title>Conflits &amp; Batailles — Praxis</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="conflits">
+
+  <!-- ======================================================
+       NAVIGATION PRINCIPALE
+       ====================================================== -->
+  <nav class="nav-principale" role="navigation" aria-label="Sections principales">
+    <div class="conteneur">
+      <div class="nav-principale__barre">
+
+        <a href="index.html" class="nav-principale__logo" aria-label="Praxis — Accueil">
+          Praxis
+        </a>
+
+        <ul class="nav-principale__liste" role="list">
+          <li class="nav-principale__item">
+            <a href="modes-production.html"
+               class="nav-principale__lien nav-principale__lien--production">
+              <span class="nav-principale__icone" aria-hidden="true">⚒</span>
+              Modes de production
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="civilisations.html"
+               class="nav-principale__lien nav-principale__lien--civilisations">
+              <span class="nav-principale__icone" aria-hidden="true">◎</span>
+              Civilisations
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="conflits.html"
+               class="nav-principale__lien nav-principale__lien--conflits"
+               aria-current="page">
+              <span class="nav-principale__icone" aria-hidden="true">⚔</span>
+              Conflits &amp; Batailles
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="revoltes.html"
+               class="nav-principale__lien nav-principale__lien--revoltes">
+              <span class="nav-principale__icone" aria-hidden="true">⚑</span>
+              Révoltes
+            </a>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </nav>
+
+  <!-- ======================================================
+       EN-TÊTE DE SECTION
+       ====================================================== -->
+  <header class="entete-section" role="banner">
+    <div class="conteneur">
+      <div class="entete-section__interieur">
+        <span class="entete-section__icone" aria-hidden="true">⚔</span>
+        <div class="entete-section__texte">
+          <p class="entete-section__numero">III — Historique &amp; analyse</p>
+          <h1 class="entete-section__titre">Conflits &amp; Batailles</h1>
+          <p class="entete-section__description">
+            La guerre comme continuation de la politique — et la politique comme expression
+            de la lutte entre classes antagonistes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================
+       BARRE DE FILTRES
+       ====================================================== -->
+  <div class="barre-filtres" role="search" aria-label="Filtrer les conflits">
+    <div class="conteneur">
+      <div class="barre-filtres__interieur">
+
+        <div class="champ-recherche">
+          <span class="champ-recherche__icone" aria-hidden="true">⚲</span>
+          <input
+            type="search"
+            id="champ-recherche"
+            name="recherche"
+            placeholder="Rechercher un conflit, des belligérants…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Rechercher un conflit"
+          >
+        </div>
+
+        <select id="filtre-epoque" class="filtre-select" aria-label="Filtrer par époque">
+          <option value="toutes">Toutes les époques</option>
+          <option value="antiquite">Antiquité</option>
+          <option value="moyen-age">Moyen Âge</option>
+          <option value="moderne">Époque moderne</option>
+          <option value="contemporaine">Époque contemporaine</option>
+          <option value="xxe">XX<sup>e</sup> siècle</option>
+        </select>
+
+        <select id="filtre-importance" class="filtre-select" aria-label="Filtrer par importance">
+          <option value="toutes">Toute importance</option>
+          <option value="decisive">Décisif</option>
+          <option value="majeure">Majeur</option>
+          <option value="notable">Notable</option>
+        </select>
+
+        <select id="filtre-tri" class="filtre-select" aria-label="Trier les conflits">
+          <option value="date-asc">Date — croissante</option>
+          <option value="date-desc">Date — décroissante</option>
+          <option value="nom-asc">Nom — A → Z</option>
+          <option value="nom-desc">Nom — Z → A</option>
+        </select>
+
+        <p class="compteur-resultats" aria-live="polite" aria-atomic="true">
+          <span id="compteur-resultats"></span>
+        </p>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       CONTENU PRINCIPAL
+       ====================================================== -->
+  <main id="contenu-principal">
+    <div class="section-liste">
+      <div class="conteneur">
+
+        <!--
+          Structure d'une carte générée par JS (afficherConflits()) :
+
+          <article class="carte-section carte-conflit [carte-conflit--ouvert]" role="listitem">
+            <div class="carte-section__entete">
+              <a href="detail.html?type=conflit&id=[id]" class="carte-section__lien-titre">
+                <h2 class="carte-section__titre">[Nom du conflit]</h2>
+              </a>
+              <div class="carte-section__meta">
+                <span>[Période]</span>
+                <span class="carte-section__meta-sep" aria-hidden="true">·</span>
+                <span class="badge badge-[importance]">[Importance]</span>
+              </div>
+            </div>
+            <div class="carte-section__champs">
+              <!-- Bloc belligérants -->
+              <div class="detail-belligerants" style="padding: var(--espace-s)">
+                [coteA] <div class="vs-separateur">VS</div> [coteB]
+              </div>
+              <!-- Analyse -->
+              <div class="carte-section__champ">
+                <span class="carte-section__champ-titre">Analyse — lutte des classes</span>
+                <p class="carte-section__champ-texte">[analyse marxiste]</p>
+              </div>
+            </div>
+            <!-- Sous-niveau batailles (toggleable) -->
+            <div class="carte-conflit__batailles">
+              <button class="carte-conflit__batailles-btn"
+                      aria-expanded="false"
+                      aria-controls="batailles-[id]">
+                <span>Batailles ([N])</span>
+                <span class="carte-conflit__batailles-chevron" aria-hidden="true">▾</span>
+              </button>
+              <ul class="carte-conflit__batailles-liste" id="batailles-[id]">
+                <li class="carte-conflit__bataille-item">
+                  <a href="bataille.html?id=[bataille-id]" class="carte-conflit__bataille-lien">
+                    <span class="carte-conflit__bataille-nom">[Nom bataille]</span>
+                    <span class="carte-conflit__bataille-date">[Date]</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </article>
+        -->
+
+        <div
+          class="grille-section"
+          id="grille-conflits"
+          role="list"
+          aria-label="Conflits et batailles"
+        >
+          <!-- Généré dynamiquement par afficherConflits() dans app.js -->
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ======================================================
+       PIED DE PAGE
+       ====================================================== -->
+  <footer class="site-pied" role="contentinfo">
+    <div class="conteneur">
+      <p>
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+        Praxis — Encyclopédie historico-matérialiste
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

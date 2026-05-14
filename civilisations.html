@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Praxis — Les formations sociales à travers les âges, de la Mésopotamie aux grandes puissances modernes.">
+  <title>Civilisations — Praxis</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="civilisations">
+
+  <!-- ======================================================
+       NAVIGATION PRINCIPALE
+       ====================================================== -->
+  <nav class="nav-principale" role="navigation" aria-label="Sections principales">
+    <div class="conteneur">
+      <div class="nav-principale__barre">
+
+        <a href="index.html" class="nav-principale__logo" aria-label="Praxis — Accueil">
+          Praxis
+        </a>
+
+        <ul class="nav-principale__liste" role="list">
+          <li class="nav-principale__item">
+            <a href="modes-production.html"
+               class="nav-principale__lien nav-principale__lien--production">
+              <span class="nav-principale__icone" aria-hidden="true">⚒</span>
+              Modes de production
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="civilisations.html"
+               class="nav-principale__lien nav-principale__lien--civilisations"
+               aria-current="page">
+              <span class="nav-principale__icone" aria-hidden="true">◎</span>
+              Civilisations
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="conflits.html"
+               class="nav-principale__lien nav-principale__lien--conflits">
+              <span class="nav-principale__icone" aria-hidden="true">⚔</span>
+              Conflits &amp; Batailles
+            </a>
+          </li>
+          <li class="nav-principale__item">
+            <a href="revoltes.html"
+               class="nav-principale__lien nav-principale__lien--revoltes">
+              <span class="nav-principale__icone" aria-hidden="true">⚑</span>
+              Révoltes
+            </a>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </nav>
+
+  <!-- ======================================================
+       EN-TÊTE DE SECTION
+       ====================================================== -->
+  <header class="entete-section" role="banner">
+    <div class="conteneur">
+      <div class="entete-section__interieur">
+        <span class="entete-section__icone" aria-hidden="true">◎</span>
+        <div class="entete-section__texte">
+          <p class="entete-section__numero">II — Formations sociales</p>
+          <h1 class="entete-section__titre">Civilisations</h1>
+          <p class="entete-section__description">
+            Les grandes formations sociales à travers les âges —
+            leur mode de production, leurs conflits internes et leur place dans l'histoire universelle.
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================
+       FRISE CHRONOLOGIQUE LÉGÈRE
+       ====================================================== -->
+  <section class="frise-legere" aria-label="Frise chronologique des civilisations">
+    <div class="frise-legere__piste" id="frise-civilisations" role="list">
+      <!--
+        Éléments générés par JS (construireFriseCivilisations()) :
+
+        <button class="frise-legere__item" role="listitem"
+                data-id="[id]" aria-label="[Nom], [période]">
+          <span class="frise-legere__periode">[Période affichée]</span>
+          <span class="frise-legere__nom">[Nom court]</span>
+        </button>
+      -->
+    </div>
+  </section>
+
+  <!-- ======================================================
+       BARRE DE FILTRES
+       ====================================================== -->
+  <div class="barre-filtres" role="search" aria-label="Filtrer les civilisations">
+    <div class="conteneur">
+      <div class="barre-filtres__interieur">
+
+        <div class="champ-recherche">
+          <span class="champ-recherche__icone" aria-hidden="true">⚲</span>
+          <input
+            type="search"
+            id="champ-recherche"
+            name="recherche"
+            placeholder="Rechercher une civilisation, une région…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Rechercher une civilisation"
+          >
+        </div>
+
+        <select id="filtre-epoque" class="filtre-select" aria-label="Filtrer par époque">
+          <option value="toutes">Toutes les époques</option>
+          <option value="antiquite">Antiquité</option>
+          <option value="moyen-age">Moyen Âge</option>
+          <option value="moderne">Époque moderne</option>
+          <option value="contemporaine">Époque contemporaine</option>
+        </select>
+
+        <p class="compteur-resultats" aria-live="polite" aria-atomic="true">
+          <span id="compteur-resultats"></span>
+        </p>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       CONTENU PRINCIPAL
+       ====================================================== -->
+  <main id="contenu-principal">
+    <div class="section-liste">
+      <div class="conteneur">
+
+        <!--
+          Structure d'une carte générée par JS (afficherCivilisations()) :
+
+          <article class="carte-section" role="listitem">
+            <div class="carte-section__entete">
+              <a href="detail.html?type=civilisation&id=[id]" class="carte-section__lien-titre">
+                <h2 class="carte-section__titre">[Nom]</h2>
+              </a>
+              <div class="carte-section__meta">
+                <span>[Période]</span>
+                <span class="carte-section__meta-sep" aria-hidden="true">·</span>
+                <span>⚑ [Région / Capitale]</span>
+              </div>
+            </div>
+            <div class="carte-section__champs">
+              <div class="carte-section__champ">
+                <span class="carte-section__champ-titre">Présentation</span>
+                <p class="carte-section__champ-texte">[description]</p>
+              </div>
+              <div class="carte-section__champ">
+                <span class="carte-section__champ-titre">Mode de production</span>
+                <p class="carte-section__champ-texte">[mode de production correspondant]</p>
+              </div>
+            </div>
+            <div class="carte-section__pied">
+              <span class="carte-section__champ-titre">Conflits associés</span>
+              <span class="tag">[conflit 1]</span>
+            </div>
+          </article>
+        -->
+
+        <div
+          class="grille-section"
+          id="grille-civilisations"
+          role="list"
+          aria-label="Civilisations"
+        >
+          <!-- Généré dynamiquement par afficherCivilisations() dans app.js -->
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ======================================================
+       PIED DE PAGE
+       ====================================================== -->
+  <footer class="site-pied" role="contentinfo">
+    <div class="conteneur">
+      <p>
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+        Praxis — Encyclopédie historico-matérialiste
+        <span class="site-pied__ornement" aria-hidden="true">⚔</span>
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

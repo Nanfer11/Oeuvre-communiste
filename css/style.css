@@ -452,6 +452,71 @@ sup {
 }
 
 /* ------------------------------------------------------------
+   6b. PAGE D'ACCUEIL — PRÉSENTATION
+   ------------------------------------------------------------ */
+
+.presentation {
+  padding: var(--espace-xl) 0;
+  border-bottom: 1px solid var(--couleur-bordure);
+}
+
+.presentation__grille {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espace-xl);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.presentation__titre {
+  font-family: var(--police-titre);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--couleur-accent);
+  letter-spacing: 0.02em;
+  margin-bottom: var(--espace-m);
+  padding-bottom: var(--espace-s);
+  border-bottom: 1px solid var(--couleur-bordure);
+}
+
+.presentation__texte {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--couleur-texte-dim);
+  margin-bottom: var(--espace-m);
+}
+
+.presentation__texte em {
+  color: var(--couleur-texte);
+  font-style: italic;
+}
+
+.presentation__texte:last-child {
+  margin-bottom: 0;
+}
+
+.presentation__citation {
+  position: relative;
+  margin: var(--espace-m) 0;
+  padding: var(--espace-s) var(--espace-m);
+  border-left: 2px solid var(--couleur-accent-dim);
+  font-family: var(--police-titre);
+  font-style: italic;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--couleur-texte);
+  background-color: var(--couleur-surface);
+  border-radius: 0 var(--rayon-m) var(--rayon-m) 0;
+}
+
+@media (max-width: 700px) {
+  .presentation__grille {
+    grid-template-columns: 1fr;
+    gap: var(--espace-l);
+  }
+}
+
+/* ------------------------------------------------------------
    7. PAGE D'ACCUEIL — CARTES D'ACCÈS AUX SECTIONS
    ------------------------------------------------------------ */
 

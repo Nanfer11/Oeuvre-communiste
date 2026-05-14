@@ -482,7 +482,7 @@ sup {
 .presentation__texte {
   font-size: 0.9rem;
   line-height: 1.75;
-  color: var(--couleur-texte-dim);
+  color: var(--couleur-texte);
   margin-bottom: var(--espace-m);
 }
 

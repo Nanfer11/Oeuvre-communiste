@@ -240,13 +240,13 @@ sup {
 
 .site-entete__sous-titre {
   color: #7a7060;
-  font-size: 0.85rem;
-  font-style: italic;
-  font-family: var(--police-titre);
-  letter-spacing: 0.15em;
-  max-width: 520px;
+  font-size: 0.8rem;
+  font-style: normal;
+  font-family: var(--police-corps);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   margin: var(--espace-m) auto 0;
-  line-height: 1.7;
+  line-height: 1;
 }
 
 /* ------------------------------------------------------------
@@ -295,10 +295,7 @@ sup {
   color: var(--couleur-texte);
 }
 
-/* Masquer le logo sur la page d'accueil (le grand header suffit) */
-[data-page="accueil"] .nav-principale__logo {
-  display: none;
-}
+/* Logo visible sur toutes les pages dont l'accueil */
 
 .nav-principale__liste {
   display: flex;
@@ -374,9 +371,11 @@ sup {
 }
 
 .citations-grille {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--espace-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-m);
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .citation {
@@ -573,13 +572,14 @@ sup {
   color: var(--couleur-texte);
 }
 
-/* Numéro géant en fond — absolu top-right */
+/* Numéro géant en fond — absolu centré */
 .acces-carte__numero {
   position: absolute;
-  top: var(--espace-s);
+  top: 50%;
   right: var(--espace-m);
+  transform: translateY(-50%);
   font-family: var(--police-titre);
-  font-size: 3rem;
+  font-size: 7rem;
   font-weight: 700;
   color: #1e1e1e;
   line-height: 1;

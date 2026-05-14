@@ -20,16 +20,16 @@
   --couleur-texte-dim:   #7a7060;
 
   /* Couleurs des 4 sections */
-  --couleur-production:     #3a6a3a;
-  --couleur-civilisations:  #4a3a8e;
-  --couleur-conflits:       #8e2a2a;
-  --couleur-revoltes:       #7a5020;
+  --couleur-production:     #c9a84c;
+  --couleur-civilisations:  #8ba5c9;
+  --couleur-conflits:       #c0392b;
+  --couleur-revoltes:       #c97a4c;
 
   /* Couleurs des 4 sections — teintes claires (texte / icônes) */
-  --couleur-production-clair:    #70aa70;
-  --couleur-civilisations-clair: #8070cc;
+  --couleur-production-clair:    #d4b86a;
+  --couleur-civilisations-clair: #a0b8d8;
   --couleur-conflits-clair:      #cc5050;
-  --couleur-revoltes-clair:      #c08040;
+  --couleur-revoltes-clair:      #d4904e;
 
   /* Typographie */
   --police-titre:  'Playfair Display', Georgia, 'Times New Roman', serif;
@@ -201,62 +201,49 @@ sup {
    ------------------------------------------------------------ */
 
 .site-entete {
-  position: relative;
-  background-color: var(--couleur-surface);
-  border-bottom: 1px solid var(--couleur-bordure);
-  padding: var(--espace-xxl) 0 var(--espace-xl);
+  padding: 5rem 3rem 4rem;
   text-align: center;
-  overflow: hidden;
-}
-
-/* Halo de couleur en arrière-plan */
-.site-entete::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(201, 168, 76, 0.05) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 50%, rgba(139, 0, 0, 0.05) 0%, transparent 60%);
-  pointer-events: none;
+  border-bottom: 1px solid var(--couleur-bordure);
 }
 
 .site-entete__surtitre {
   font-family: var(--police-corps);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.4em;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--couleur-accent-dim);
+  color: #7a7060;
   margin-bottom: var(--espace-m);
 }
 
 /* Titre principal "PRAXIS" */
 .site-entete__titre {
   font-family: var(--police-titre);
-  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-size: 5rem;
   font-weight: 700;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.5em;
   text-transform: uppercase;
   color: var(--couleur-texte);
   margin-bottom: 0;
   line-height: 1;
 }
 
-/* Ligne dorée sous le titre */
+/* Séparateur doré sous le titre */
 .site-entete__titre::after {
   content: '';
   display: block;
   width: 60px;
   height: 1px;
-  background: linear-gradient(to right, transparent, var(--couleur-accent), transparent);
-  margin: var(--espace-m) auto 0;
+  background: #c9a84c;
+  margin: 2rem auto 0;
 }
 
 .site-entete__sous-titre {
-  color: var(--couleur-texte-dim);
-  font-size: 0.95rem;
+  color: #7a7060;
+  font-size: 0.85rem;
   font-style: italic;
   font-family: var(--police-titre);
+  letter-spacing: 0.15em;
   max-width: 520px;
   margin: var(--espace-m) auto 0;
   line-height: 1.7;
@@ -267,8 +254,8 @@ sup {
    ------------------------------------------------------------ */
 
 .nav-principale {
-  background-color: var(--couleur-surface);
-  border-bottom: 1px solid var(--couleur-bordure);
+  background-color: #111111;
+  border-bottom: 1px solid #2e2e2e;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -277,6 +264,7 @@ sup {
 .nav-principale__barre {
   display: flex;
   align-items: stretch;
+  min-height: 52px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -285,20 +273,20 @@ sup {
   display: none;
 }
 
-/* Logo "Praxis" dans la nav — visible sur les pages internes */
+/* Logo "PRAXIS" dans la nav — visible sur les pages internes */
 .nav-principale__logo {
   display: flex;
   align-items: center;
   padding: 0 var(--espace-l) 0 0;
   font-family: var(--police-titre);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--couleur-accent);
+  color: #c9a84c;
   text-decoration: none;
   flex-shrink: 0;
-  border-right: 1px solid var(--couleur-bordure);
+  border-right: 1px solid #2e2e2e;
   margin-right: var(--espace-s);
   transition: color var(--transition);
 }
@@ -327,10 +315,10 @@ sup {
   align-items: center;
   gap: var(--espace-xs);
   padding: var(--espace-m) var(--espace-m);
-  color: var(--couleur-texte-dim);
-  font-size: 0.78rem;
+  color: #7a7060;
+  font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   border-bottom: 2px solid transparent;
   white-space: nowrap;
@@ -381,7 +369,7 @@ sup {
 
 .section-citations {
   padding: var(--espace-xl) 0;
-  background-color: var(--couleur-surface);
+  background-color: var(--couleur-fond);
   border-bottom: 1px solid var(--couleur-bordure);
 }
 
@@ -392,62 +380,44 @@ sup {
 }
 
 .citation {
-  position: relative;
-  padding: var(--espace-l);
-  border-left: 2px solid var(--couleur-accent-dim);
-  background-color: var(--couleur-fond);
-  border-radius: 0 var(--rayon-m) var(--rayon-m) 0;
+  padding: 1rem 1.5rem;
+  border-left: 2px solid #c9a84c;
+  background-color: #111111;
   margin: 0;
-  /* Légère transition au survol */
   transition: border-color var(--transition);
 }
 
 .citation:hover {
-  border-left-color: var(--couleur-accent);
-}
-
-/* Guillemet décoratif */
-.citation::before {
-  content: '\201C';
-  position: absolute;
-  top: -0.1em;
-  left: var(--espace-m);
-  font-family: var(--police-titre);
-  font-size: 4rem;
-  line-height: 1;
-  color: var(--couleur-accent-dim);
-  opacity: 0.25;
-  pointer-events: none;
-  user-select: none;
+  border-left-color: var(--couleur-texte);
 }
 
 .citation__texte {
   font-family: var(--police-titre);
   font-style: italic;
-  font-size: 0.975rem;
+  font-size: 0.9rem;
   line-height: 1.75;
-  color: var(--couleur-texte);
-  margin-bottom: var(--espace-m);
-  position: relative; /* passe au-dessus du guillemet décoratif */
+  color: #c0b8a8;
+  margin-bottom: var(--espace-s);
 }
 
 .citation__source {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
+  text-align: right;
 }
 
 .citation__auteur {
   font-style: normal;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--couleur-accent);
+  letter-spacing: 0.1em;
+  color: #7a7060;
 }
 
 .citation__oeuvre {
-  font-size: 0.72rem;
-  color: var(--couleur-texte-dim);
+  font-size: 0.68rem;
+  color: #7a7060;
   font-style: italic;
 }
 
@@ -463,26 +433,42 @@ sup {
 .presentation__grille {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--espace-xl);
+  gap: 0;
   max-width: 900px;
   margin: 0 auto;
 }
 
+.presentation__bloc {
+  padding: 0 var(--espace-xl);
+}
+
+.presentation__bloc:first-child {
+  padding-left: 0;
+  border-right: 1px solid #1a1a1a;
+  padding-right: var(--espace-xl);
+}
+
+.presentation__bloc:last-child {
+  padding-right: 0;
+  padding-left: var(--espace-xl);
+}
+
 .presentation__titre {
-  font-family: var(--police-titre);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--couleur-accent);
-  letter-spacing: 0.02em;
-  margin-bottom: var(--espace-m);
+  font-family: var(--police-corps);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #c9a84c;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
   padding-bottom: var(--espace-s);
-  border-bottom: 1px solid var(--couleur-bordure);
+  border-bottom: 1px solid #2e2e2e;
 }
 
 .presentation__texte {
-  font-size: 0.9rem;
-  line-height: 1.75;
-  color: var(--couleur-texte);
+  font-size: 0.85rem;
+  line-height: 1.9;
+  color: #a09880;
   margin-bottom: var(--espace-m);
 }
 
@@ -496,23 +482,30 @@ sup {
 }
 
 .presentation__citation {
-  position: relative;
   margin: var(--espace-m) 0;
   padding: var(--espace-s) var(--espace-m);
-  border-left: 2px solid var(--couleur-accent-dim);
+  border-left: 2px solid #c9a84c;
   font-family: var(--police-titre);
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   line-height: 1.7;
-  color: var(--couleur-texte);
-  background-color: var(--couleur-surface);
-  border-radius: 0 var(--rayon-m) var(--rayon-m) 0;
+  color: #c0b8a8;
+  background-color: #111111;
 }
 
 @media (max-width: 700px) {
   .presentation__grille {
     grid-template-columns: 1fr;
-    gap: var(--espace-l);
+  }
+  .presentation__bloc:first-child {
+    border-right: none;
+    border-bottom: 1px solid #1a1a1a;
+    padding-right: 0;
+    padding-bottom: var(--espace-l);
+  }
+  .presentation__bloc:last-child {
+    padding-left: 0;
+    padding-top: var(--espace-l);
   }
 }
 
@@ -552,11 +545,12 @@ sup {
   background: linear-gradient(to left, transparent, var(--couleur-bordure));
 }
 
-/* Grille 2×2 */
+/* Grille 2×2 — séparateurs via gap + fond #1a1a1a */
 .acces-grille {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--espace-m);
+  gap: 1px;
+  background-color: #1a1a1a;
 }
 
 /* Carte individuelle */
@@ -565,94 +559,53 @@ sup {
   align-items: center;
   gap: var(--espace-l);
   padding: var(--espace-l) var(--espace-l);
-  background-color: var(--couleur-surface);
-  border: 1px solid var(--couleur-bordure);
-  border-left-width: 3px;
-  border-radius: var(--rayon-m);
+  background-color: #111111;
   text-decoration: none;
   color: var(--couleur-texte);
-  transition:
-    transform var(--transition),
-    box-shadow var(--transition),
-    border-color var(--transition),
-    background-color var(--transition);
+  transition: background-color var(--transition);
   position: relative;
   overflow: hidden;
   min-height: 120px;
 }
 
 .acces-carte:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  background-color: #161616;
   color: var(--couleur-texte);
 }
 
-/* Couleur de bord gauche et hover par section */
-.acces-carte--production {
-  border-left-color: var(--couleur-production);
-}
-.acces-carte--production:hover {
-  border-color: var(--couleur-production);
-  background-color: #151e15;
-}
-
-.acces-carte--civilisations {
-  border-left-color: var(--couleur-civilisations);
-}
-.acces-carte--civilisations:hover {
-  border-color: var(--couleur-civilisations);
-  background-color: #141320;
+/* Numéro géant en fond — absolu top-right */
+.acces-carte__numero {
+  position: absolute;
+  top: var(--espace-s);
+  right: var(--espace-m);
+  font-family: var(--police-titre);
+  font-size: 3rem;
+  font-weight: 700;
+  color: #1e1e1e;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  text-transform: uppercase;
 }
 
-.acces-carte--conflits {
-  border-left-color: var(--couleur-conflits);
-}
-.acces-carte--conflits:hover {
-  border-color: var(--couleur-conflits);
-  background-color: #1e1212;
-}
-
-.acces-carte--revoltes {
-  border-left-color: var(--couleur-revoltes);
-}
-.acces-carte--revoltes:hover {
-  border-color: var(--couleur-revoltes);
-  background-color: #1c1610;
-}
-
-/* En-tête gauche : numéro + icône */
+/* En-tête gauche : icône seule (numéro retiré du flux) */
 .acces-carte__en-tete {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--espace-xs);
   flex-shrink: 0;
   width: 48px;
-}
-
-.acces-carte__numero {
-  font-family: var(--police-titre);
-  font-size: 0.65rem;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  color: var(--couleur-texte-dim);
-  text-transform: uppercase;
 }
 
 .acces-carte__icone {
   font-size: 1.8rem;
   line-height: 1;
-  transition: transform var(--transition), color var(--transition);
+  transition: color var(--transition);
 }
 
-.acces-carte--production    .acces-carte__icone { color: var(--couleur-production-clair); }
-.acces-carte--civilisations .acces-carte__icone { color: var(--couleur-civilisations-clair); }
-.acces-carte--conflits      .acces-carte__icone { color: var(--couleur-conflits-clair); }
-.acces-carte--revoltes      .acces-carte__icone { color: var(--couleur-revoltes-clair); }
-
-.acces-carte:hover .acces-carte__icone {
-  transform: scale(1.12);
-}
+.acces-carte--production    .acces-carte__icone { color: #c9a84c; }
+.acces-carte--civilisations .acces-carte__icone { color: #8ba5c9; }
+.acces-carte--conflits      .acces-carte__icone { color: #c0392b; }
+.acces-carte--revoltes      .acces-carte__icone { color: #c97a4c; }
 
 /* Corps de la carte : titre + description */
 .acces-carte__corps {
@@ -663,30 +616,36 @@ sup {
 .acces-carte__titre {
   font-family: var(--police-titre);
   font-size: 1.15rem;
-  color: var(--couleur-texte);
   margin-bottom: var(--espace-xs);
   line-height: 1.25;
+  transition: color var(--transition);
 }
+
+/* Couleur du titre par section */
+.acces-carte--production    .acces-carte__titre { color: #c9a84c; }
+.acces-carte--civilisations .acces-carte__titre { color: #8ba5c9; }
+.acces-carte--conflits      .acces-carte__titre { color: #c0392b; }
+.acces-carte--revoltes      .acces-carte__titre { color: #c97a4c; }
 
 .acces-carte__description {
   font-size: 0.83rem;
-  color: var(--couleur-texte-dim);
+  color: #7a7060;
   line-height: 1.55;
   margin: 0;
 }
 
-/* Flèche droite */
+/* Flèche — invisible par défaut, apparaît au hover */
 .acces-carte__fleche {
   font-size: 1.1rem;
-  color: var(--couleur-texte-dim);
+  color: var(--couleur-accent);
   flex-shrink: 0;
-  transition: transform var(--transition), color var(--transition);
+  opacity: 0;
+  transition: opacity var(--transition);
   margin-left: var(--espace-s);
 }
 
 .acces-carte:hover .acces-carte__fleche {
-  transform: translateX(5px);
-  color: var(--couleur-accent);
+  opacity: 1;
 }
 
 /* ------------------------------------------------------------

@@ -1,1299 +1,945 @@
-// app.js — Logique applicative
-// Gère l'affichage, les filtres, la recherche, le tri et la frise chronologique
+// app.js — Praxis, encyclopédie historico-matérialiste
+// Logique applicative : rendu des 4 sections, filtres, recherche, frise légère
+// Aucune dépendance externe — JavaScript vanilla ES6+
 
 'use strict';
 
 /* ============================================================
-   ÉTAT DE L'APPLICATION
-   ============================================================ */
-
-const etat = {
-  // Filtres actifs
-  recherche:  '',
-  epoque:     'toutes',
-  importance: 'toutes',
-  tri:        'date-asc',
-
-  // Résultats courants (subset filtré + trié de `batailles`)
-  resultats: [],
-};
-
-/* ============================================================
-   CORRESPONDANCES D'AFFICHAGE
-   ============================================================ */
-
-const LIBELLES_EPOQUE = {
-  'antiquite':      'Antiquité',
-  'moyen-age':      'Moyen Âge',
-  'moderne':        'Époque moderne',
-  'contemporaine':  'Époque contemporaine',
-  'xxe':            'XXe siècle',
-};
-
-const LIBELLES_IMPORTANCE = {
-  'decisive': 'Décisive',
-  'majeure':  'Majeure',
-  'notable':  'Notable',
-};
-
-/* ============================================================
-   ÉCHAPPEMENT HTML (sécurité — jamais de innerHTML brut)
+   UTILITAIRES GÉNÉRAUX
    ============================================================ */
 
 /**
- * Échappe les caractères spéciaux HTML d'une chaîne.
- * @param {string} chaine
- * @returns {string}
+ * Échappe les caractères HTML. Dernier recours si innerHTML est inévitable.
+ * Dans ce fichier, tout le rendu passe par les API DOM — cette fonction
+ * sert uniquement à titre défensif pour les attributs href.
  */
 function echapper(chaine) {
-  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  return String(chaine).replace(/[&<>"']/g, c => map[c]);
+  const carte = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(chaine).replace(/[&<>"']/g, c => carte[c]);
 }
 
-/* ============================================================
-   FILTRAGE & TRI
-   ============================================================ */
-
 /**
- * Normalise une chaîne pour la recherche : minuscules, sans accents.
- * @param {string} chaine
- * @returns {string}
+ * Normalise une chaîne pour la recherche :
+ * retire les diacritiques et met tout en minuscules.
  */
 function normaliser(chaine) {
-  return chaine
-    .toLowerCase()
+  return String(chaine)
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
 }
 
 /**
- * Vérifie si une bataille correspond aux filtres actifs de l'état.
- * @param {Object} bataille
- * @returns {boolean}
+ * Crée un élément HTML avec classe(s) et texte optionnels.
+ * @param {string} tag  — balise HTML
+ * @param {string|null} classes — className ou null
+ * @param {string} [texte] — textContent optionnel
+ * @returns {HTMLElement}
  */
-function correspondAuxFiltres(bataille) {
-  // Filtre époque
-  if (etat.epoque !== 'toutes' && bataille.epoque !== etat.epoque) {
-    return false;
-  }
-
-  // Filtre importance (la valeur stockée dans data.js peut contenir un accent)
-  if (etat.importance !== 'toutes') {
-    const importanceNormalisee = normaliser(bataille.importance);
-    if (importanceNormalisee !== etat.importance) {
-      return false;
-    }
-  }
-
-  // Filtre recherche textuelle (nom, lieu, conflit, belligérants)
-  if (etat.recherche !== '') {
-    const motif = normaliser(etat.recherche);
-    const champs = [
-      bataille.nom,
-      bataille.lieu,
-      bataille.conflit,
-      bataille.belligerants.a,
-      bataille.belligerants.b,
-      bataille.vainqueur,
-    ];
-    const correspondance = champs.some(c => normaliser(c).includes(motif));
-    if (!correspondance) return false;
-  }
-
-  return true;
+function el(tag, classes, texte) {
+  const e = document.createElement(tag);
+  if (classes) e.className = classes;
+  if (texte !== undefined) e.textContent = texte;
+  return e;
 }
 
-/**
- * Compare deux batailles selon le critère de tri actif.
- * @param {Object} a
- * @param {Object} b
- * @returns {number}
- */
-function comparerBatailles(a, b) {
-  switch (etat.tri) {
-    case 'date-asc':  return a.date - b.date;
-    case 'date-desc': return b.date - a.date;
-    case 'nom-asc':   return a.nom.localeCompare(b.nom, 'fr');
-    case 'nom-desc':  return b.nom.localeCompare(a.nom, 'fr');
-    default:          return 0;
-  }
-}
-
-/**
- * Recalcule etat.resultats depuis le tableau global `batailles`.
- */
-function recalculerResultats() {
-  etat.resultats = batailles
-    .filter(b => b.type === 'bataille')
-    .filter(correspondAuxFiltres)
-    .sort(comparerBatailles);
+/** Crée un séparateur de méta-info « · ». */
+function separateurMeta() {
+  const s = el('span', 'carte-section__meta-sep');
+  s.setAttribute('aria-hidden', 'true');
+  s.textContent = '·';
+  return s;
 }
 
 /* ============================================================
-   GÉNÉRATION HTML DES CARTES
+   COMPTEUR & MESSAGES D'ÉTAT
    ============================================================ */
 
-/**
- * Retourne la classe CSS du badge selon l'importance.
- * @param {string} importance
- * @returns {string}
- */
-function classeBadge(importance) {
-  const classes = {
-    'décisive': 'badge-decisive',
-    'majeure':  'badge-majeure',
-    'notable':  'badge-notable',
-  };
-  return classes[importance] || 'badge-notable';
+function mettreAJourCompteur(n) {
+  const compteur = document.getElementById('compteur-resultats');
+  if (!compteur) return;
+  compteur.textContent = n === 0
+    ? 'Aucun résultat'
+    : `${n} résultat${n > 1 ? 's' : ''}`;
+}
+
+function afficherMessageVide(grille) {
+  grille.appendChild(el('p', 'message-vide', 'Aucun résultat pour ces critères.'));
+}
+
+/* ============================================================
+   HELPERS DE DONNÉES
+   ============================================================ */
+
+/** Dérive l'époque standard à partir d'une année numérique. */
+function epoqueDeAnnee(annee) {
+  if (annee < 500)  return 'antiquite';
+  if (annee < 1500) return 'moyen-age';
+  if (annee < 1800) return 'moderne';
+  if (annee < 1900) return 'contemporaine';
+  return 'xxe';
 }
 
 /**
- * Génère le HTML d'une carte de bataille.
- * Utilise un DocumentFragment pour ne jamais injecter de données brutes.
- * @param {Object} bataille
- * @returns {HTMLElement}
+ * Dérive l'époque d'une civilisation à partir de son mode de production.
+ * Retourne null pour les civilisations préhistoriques (absentes des filtres).
  */
-function creerCarteBataille(bataille) {
-  const article = document.createElement('article');
-  article.className = 'carte-bataille';
-  article.setAttribute('role', 'button');
-  article.setAttribute('tabindex', '0');
-  article.setAttribute('aria-label', `Voir la ${echapper(bataille.nom)}`);
-
-  // En-tête
-  const entete = document.createElement('div');
-  entete.className = 'carte-bataille__entete';
-
-  const colInfo = document.createElement('div');
-
-  const date = document.createElement('div');
-  date.className = 'carte-bataille__date';
-  date.textContent = bataille.dateAffichee;
-
-  const nom = document.createElement('h3');
-  nom.className = 'carte-bataille__nom';
-  nom.textContent = bataille.nom;
-
-  const conflit = document.createElement('div');
-  conflit.className = 'carte-bataille__conflit';
-  conflit.textContent = bataille.conflit;
-
-  colInfo.append(date, nom, conflit);
-
-  const badge = document.createElement('span');
-  badge.className = `badge ${classeBadge(bataille.importance)}`;
-  badge.textContent = bataille.importance.charAt(0).toUpperCase() + bataille.importance.slice(1);
-
-  entete.append(colInfo, badge);
-
-  // Description courte
-  const corps = document.createElement('div');
-  corps.className = 'carte-bataille__corps';
-
-  const description = document.createElement('p');
-  description.className = 'carte-bataille__description';
-  description.textContent = bataille.description;
-
-  corps.appendChild(description);
-
-  // Métadonnées
-  const meta = document.createElement('div');
-  meta.className = 'carte-bataille__meta';
-
-  const lieu = document.createElement('div');
-  lieu.className = 'carte-bataille__lieu';
-
-  const lieuIcone = document.createElement('span');
-  lieuIcone.className = 'carte-bataille__lieu-icone';
-  lieuIcone.setAttribute('aria-hidden', 'true');
-  lieuIcone.textContent = '⚑';
-
-  const lieuTexte = document.createTextNode(bataille.lieu);
-  lieu.append(lieuIcone, lieuTexte);
-
-  const vainqueur = document.createElement('div');
-  vainqueur.className = 'carte-bataille__vainqueur';
-
-  const vainqueurLabel = document.createTextNode('Vainqueur : ');
-  const vainqueurNom = document.createElement('strong');
-  vainqueurNom.textContent = bataille.vainqueur;
-  vainqueur.append(vainqueurLabel, vainqueurNom);
-
-  meta.append(lieu, vainqueur);
-
-  article.append(entete, corps, meta);
-
-  // Navigation au clic et au clavier
-  const naviguerVersBataille = () => {
-    window.location.href = `bataille.html?id=${encodeURIComponent(bataille.id)}`;
+function epoqueDeCivilisation(civ) {
+  const table = {
+    asiatique:         'antiquite',
+    antique:           'antiquite',
+    feodal:            'moyen-age',
+    capitaliste:       'moderne',
   };
+  return table[civ.modeProduction] || null;
+}
 
-  article.addEventListener('click', naviguerVersBataille);
-  article.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      naviguerVersBataille();
-    }
-  });
+/** Retourne le nom d'un conflit depuis son id, ou l'id formaté si introuvable. */
+function nomConflitDepuisId(id) {
+  if (typeof conflits !== 'undefined') {
+    const c = conflits.find(c => c.id === id);
+    if (c) return c.nom;
+  }
+  return id;
+}
+
+/**
+ * Retourne nom + date d'une bataille depuis son id.
+ * Se rabat sur un formatage de l'id si la bataille n'est pas dans le tableau legacy.
+ * Ex. : "lac-trasimene-217" → { nom: "Lac Trasimene", date: "217" }
+ */
+function infoBatailleDepuisId(id) {
+  if (typeof batailles !== 'undefined') {
+    const b = batailles.find(b => b.id === id);
+    if (b) return { nom: b.nom, date: b.dateAffichee };
+  }
+  const parties = id.split('-');
+  const date = parties[parties.length - 1];
+  const nom  = parties.slice(0, -1)
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(' ');
+  return { nom, date };
+}
+
+/**
+ * Trouve les révoltes dont la date de début est dans la fenêtre temporelle
+ * du conflit. Utilisé pour l'affichage des révoltes liées sur les cartes conflit.
+ */
+function revoltesLieesAuConflit(conflit) {
+  if (typeof revoltes === 'undefined') return [];
+  return revoltes.filter(
+    r => r.dateDebut >= conflit.dateDebut && r.dateDebut <= conflit.dateFin
+  );
+}
+
+/** Classe CSS du badge d'importance (normalise les accents). */
+function classeImportance(imp) {
+  return 'badge-' + normaliser(imp);
+}
+
+/** Classe CSS du badge de résultat de révolte. */
+function classeResultat(res) {
+  return 'badge-' + res; // valeurs : "victoire", "defaite", "mitige" — pas d'accent
+}
+
+/** Libellé affiché d'un résultat de révolte. */
+function libelleResultat(res) {
+  return { victoire: 'Victoire', defaite: 'Défaite', mitige: 'Mitigé' }[res] || res;
+}
+
+/** Retourne le nom du mode de production depuis son id. */
+function nomModeProductionDepuisId(id) {
+  if (typeof modesProduction !== 'undefined') {
+    const m = modesProduction.find(m => m.id === id);
+    if (m) return m.nom;
+  }
+  return id;
+}
+
+/* ============================================================
+   I. MODES DE PRODUCTION
+   ============================================================ */
+
+/**
+ * Crée la carte DOM d'un mode de production.
+ * Structure : En-tête (nom + période + région) / Définition / Citation /
+ *             Analyse / Pied (exemples en tags)
+ */
+function creerCarteMode(mode) {
+  const article = el('article', 'carte-section');
+  article.setAttribute('role', 'listitem');
+  article.dataset.id = mode.id;
+
+  // ── En-tête (pas de lien — pas de page détail pour les modes)
+  const entete = el('div', 'carte-section__entete');
+  entete.appendChild(el('h2', 'carte-section__titre', mode.nom));
+
+  const meta = el('div', 'carte-section__meta');
+  meta.appendChild(el('span', null, mode.periode));
+  meta.appendChild(separateurMeta());
+  meta.appendChild(el('span', null, mode.region));
+  entete.appendChild(meta);
+  article.appendChild(entete);
+
+  // ── Champs
+  const champs = el('div', 'carte-section__champs');
+
+  // Définition
+  const champDef = el('div', 'carte-section__champ');
+  champDef.appendChild(el('span', 'carte-section__champ-titre', 'Définition'));
+  champDef.appendChild(el('p', 'carte-section__champ-texte', mode.definition));
+  champs.appendChild(champDef);
+
+  // Citation
+  const cite = el('blockquote', 'carte-section__citation');
+  cite.appendChild(el('p', 'carte-section__citation-texte', `« ${mode.citation.texte} »`));
+  cite.appendChild(
+    el('footer', 'carte-section__citation-source',
+      `— ${mode.citation.auteur}, ${mode.citation.source}`)
+  );
+  champs.appendChild(cite);
+
+  // Analyse
+  const champAnalyse = el('div', 'carte-section__champ');
+  champAnalyse.appendChild(el('span', 'carte-section__champ-titre', 'Analyse'));
+  champAnalyse.appendChild(el('p', 'carte-section__champ-texte', mode.analyse));
+  champs.appendChild(champAnalyse);
+
+  article.appendChild(champs);
+
+  // ── Pied — exemples
+  const pied = el('div', 'carte-section__pied');
+  pied.appendChild(el('span', 'carte-section__champ-titre', 'Exemples'));
+  mode.exemples.forEach(ex => pied.appendChild(el('span', 'tag', ex)));
+  article.appendChild(pied);
 
   return article;
 }
 
-/* ============================================================
-   RENDU DE LA GRILLE
-   ============================================================ */
-
-/**
- * Met à jour la grille de cartes et le compteur de résultats.
- */
-function afficherBatailles() {
-  const grille = document.getElementById('grille-batailles');
-  const compteur = document.getElementById('compteur-resultats');
-
-  if (!grille) return;
-
-  grille.innerHTML = '';
-
-  if (etat.resultats.length === 0) {
-    const vide = document.createElement('div');
-    vide.className = 'message-vide';
-    vide.innerHTML = `
-      <div class="message-vide__icone" aria-hidden="true">⚔</div>
-      <p class="message-vide__titre">Aucune bataille trouvée</p>
-      <p>Essayez de modifier vos critères de recherche ou de filtre.</p>
-    `;
-    grille.appendChild(vide);
-  } else {
-    const fragment = document.createDocumentFragment();
-    etat.resultats.forEach(bataille => fragment.appendChild(creerCarteBataille(bataille)));
-    grille.appendChild(fragment);
-  }
-
-  // Mise à jour du compteur
-  if (compteur) {
-    const total = batailles.length;
-    const affichees = etat.resultats.length;
-    compteur.innerHTML = `<span>${affichees}</span> / ${total} bataille${total > 1 ? 's' : ''}`;
-  }
-}
-
-/* ============================================================
-   FRISE CHRONOLOGIQUE
-   ============================================================ */
-
-/**
- * Génère les éléments de la frise à partir de `batailles` triées par date.
- */
-function construireFrise() {
-  const axe = document.getElementById('frise-axe');
-  if (!axe) return;
-
-  axe.innerHTML = '';
-
-  // La frise affiche toujours toutes les batailles, triées par date croissante
-  const triees = [...batailles].sort((a, b) => a.date - b.date);
-
-  const fragment = document.createDocumentFragment();
-
-  triees.forEach(bataille => {
-    const item = document.createElement('div');
-    item.className = 'frise__item';
-    item.dataset.id = bataille.id;
-    item.setAttribute('role', 'button');
-    item.setAttribute('tabindex', '0');
-    item.setAttribute('aria-label', `${bataille.nom}, ${bataille.dateAffichee}`);
-
-    const point = document.createElement('div');
-    point.className = 'frise__point';
-
-    const date = document.createElement('div');
-    date.className = 'frise__date';
-    date.textContent = bataille.dateAffichee;
-
-    const nom = document.createElement('div');
-    nom.className = 'frise__nom';
-    nom.textContent = bataille.nom;
-
-    item.append(point, date, nom);
-
-    item.addEventListener('click', () => surClicFrise(bataille.id));
-    item.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        surClicFrise(bataille.id);
-      }
-    });
-
-    fragment.appendChild(item);
-  });
-
-  axe.appendChild(fragment);
-  activerScrollFrise();
-}
-
-/**
- * Réaction au clic sur un élément de la frise :
- * filtre la grille pour ne montrer que la bataille cliquée,
- * ou réinitialise si on reclique sur l'élément déjà actif.
- * @param {string} id
- */
-function surClicFrise(id) {
-  const itemActif = document.querySelector('.frise__item--actif');
-  const estDejaActif = itemActif && itemActif.dataset.id === id;
-
-  // Retirer l'état actif de tous les items
-  document.querySelectorAll('.frise__item').forEach(el => el.classList.remove('frise__item--actif'));
-
-  if (estDejaActif) {
-    // Deuxième clic : on réinitialise le filtre d'époque
-    etat.epoque = 'toutes';
-    const selectEpoque = document.getElementById('filtre-epoque');
-    if (selectEpoque) selectEpoque.value = 'toutes';
-  } else {
-    // Premier clic : on isole cette bataille via son époque
-    // et on fait défiler la carte dans la grille
-    const bataille = batailles.find(b => b.id === id);
-    if (!bataille) return;
-
-    // Marquer l'item actif dans la frise
-    const item = document.querySelector(`.frise__item[data-id="${CSS.escape(id)}"]`);
-    if (item) item.classList.add('frise__item--actif');
-
-    // Filtrer par époque si un seul filtre serait trop large — ici on scroll sur la carte
-    etat.epoque = 'toutes';
-    etat.recherche = bataille.nom;
-
-    const champRecherche = document.getElementById('champ-recherche');
-    if (champRecherche) champRecherche.value = bataille.nom;
-
-    const selectEpoque = document.getElementById('filtre-epoque');
-    if (selectEpoque) selectEpoque.value = 'toutes';
-  }
-
-  mettreAJour();
-
-  // Faire défiler jusqu'à la première carte affichée
-  const premiereCarteVisible = document.querySelector('.carte-bataille');
-  if (premiereCarteVisible) {
-    premiereCarteVisible.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-}
-
-/**
- * Active le glisser-déplacer horizontal sur la piste de la frise.
- */
-function activerScrollFrise() {
-  const piste = document.getElementById('frise-piste');
-  if (!piste) return;
-
-  let glissement = { actif: false, depart: 0, scrollDepart: 0 };
-
-  piste.addEventListener('mousedown', e => {
-    glissement = { actif: true, depart: e.clientX, scrollDepart: piste.scrollLeft };
-    piste.style.cursor = 'grabbing';
-  });
-
-  document.addEventListener('mousemove', e => {
-    if (!glissement.actif) return;
-    const delta = e.clientX - glissement.depart;
-    piste.scrollLeft = glissement.scrollDepart - delta;
-  });
-
-  document.addEventListener('mouseup', () => {
-    glissement.actif = false;
-    piste.style.cursor = 'grab';
-  });
-}
-
-/* ============================================================
-   GESTIONNAIRES D'ÉVÉNEMENTS
-   ============================================================ */
-
-/**
- * Met à jour etat, recalcule les résultats et rafraîchit l'affichage.
- */
-function mettreAJour() {
-  recalculerResultats();
-  afficherBatailles();
-}
-
-/**
- * Branche tous les contrôles de filtre/tri sur leurs gestionnaires.
- */
-function brancherControles() {
-  // Recherche — avec léger délai anti-rebond
+function initModesProduction() {
+  const grille = document.getElementById('grille-modes-production');
   const champRecherche = document.getElementById('champ-recherche');
+  if (!grille || typeof modesProduction === 'undefined') return;
+
+  let termeRecherche = '';
+
+  function filtrerEtAfficher() {
+    const terme = normaliser(termeRecherche);
+    const liste = terme
+      ? modesProduction.filter(m =>
+          normaliser(m.nom).includes(terme) ||
+          normaliser(m.definition).includes(terme) ||
+          normaliser(m.analyse).includes(terme) ||
+          m.exemples.some(ex => normaliser(ex).includes(terme))
+        )
+      : modesProduction.slice();
+
+    grille.innerHTML = '';
+    liste.length === 0
+      ? afficherMessageVide(grille)
+      : liste.forEach(m => grille.appendChild(creerCarteMode(m)));
+    mettreAJourCompteur(liste.length);
+  }
+
   if (champRecherche) {
     let minuterie = null;
     champRecherche.addEventListener('input', () => {
       clearTimeout(minuterie);
       minuterie = setTimeout(() => {
-        etat.recherche = champRecherche.value.trim();
-        // Retirer l'état actif de la frise si l'utilisateur tape manuellement
-        document.querySelectorAll('.frise__item').forEach(el => el.classList.remove('frise__item--actif'));
-        mettreAJour();
-      }, 250);
+        termeRecherche = champRecherche.value.trim();
+        filtrerEtAfficher();
+      }, 200);
     });
   }
 
-  // Filtre époque
-  const selectEpoque = document.getElementById('filtre-epoque');
-  if (selectEpoque) {
-    selectEpoque.addEventListener('change', () => {
-      etat.epoque = selectEpoque.value;
-      document.querySelectorAll('.frise__item').forEach(el => el.classList.remove('frise__item--actif'));
-      mettreAJour();
-    });
-  }
-
-  // Filtre importance
-  const selectImportance = document.getElementById('filtre-importance');
-  if (selectImportance) {
-    selectImportance.addEventListener('change', () => {
-      etat.importance = selectImportance.value;
-      document.querySelectorAll('.frise__item').forEach(el => el.classList.remove('frise__item--actif'));
-      mettreAJour();
-    });
-  }
-
-  // Tri
-  const selectTri = document.getElementById('filtre-tri');
-  if (selectTri) {
-    selectTri.addEventListener('change', () => {
-      etat.tri = selectTri.value;
-      mettreAJour();
-    });
-  }
+  filtrerEtAfficher();
 }
 
 /* ============================================================
-   PAGE DÉTAIL (bataille.html)
+   II. CIVILISATIONS
    ============================================================ */
 
 /**
- * Lit l'ID dans l'URL et affiche le détail de la bataille correspondante.
+ * Peuple la frise légère avec un chip cliquable par civilisation.
+ * @param {Array} liste — civilisations triées à afficher dans la frise
+ * @param {Function} onClic — callback(id, boutonDOM)
  */
-function afficherPageDetail() {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get('id');
-  const conteneur = document.getElementById('detail-conteneur');
+function construireFriseCivilisations(liste, onClic) {
+  const piste = document.getElementById('frise-civilisations');
+  if (!piste) return;
 
+  // Tri chronologique pour la frise
+  const triees = liste.slice().sort((a, b) => a.dateDebut - b.dateDebut);
+
+  triees.forEach(civ => {
+    const btn = el('button', 'frise-legere__item');
+    btn.setAttribute('role', 'listitem');
+    btn.dataset.id = civ.id;
+    btn.setAttribute('aria-label', `${civ.nom}, ${civ.periode}`);
+    btn.appendChild(el('span', 'frise-legere__periode', civ.periode));
+    btn.appendChild(el('span', 'frise-legere__nom', civ.nom));
+    btn.addEventListener('click', () => onClic(civ.id, btn));
+    piste.appendChild(btn);
+  });
+}
+
+/**
+ * Crée la carte DOM d'une civilisation.
+ * Structure : En-tête (lien titre + période + région) / Présentation /
+ *             Mode de production / Pied (conflits liés en tags)
+ */
+function creerCarteCivilisation(civ) {
+  const article = el('article', 'carte-section');
+  article.setAttribute('role', 'listitem');
+  article.id = 'civ-' + civ.id; // cible pour le scroll depuis la frise
+
+  // ── En-tête avec lien vers détail
+  const entete = el('div', 'carte-section__entete');
+  const lien = el('a', 'carte-section__lien-titre');
+  lien.href = `detail.html?type=civilisation&id=${echapper(civ.id)}`;
+  lien.appendChild(el('h2', 'carte-section__titre', civ.nom));
+  entete.appendChild(lien);
+
+  const meta = el('div', 'carte-section__meta');
+  meta.appendChild(el('span', null, civ.periode));
+  meta.appendChild(separateurMeta());
+  meta.appendChild(el('span', null, civ.capitale || civ.region));
+  entete.appendChild(meta);
+  article.appendChild(entete);
+
+  // ── Champs
+  const champs = el('div', 'carte-section__champs');
+
+  const champDesc = el('div', 'carte-section__champ');
+  champDesc.appendChild(el('span', 'carte-section__champ-titre', 'Présentation'));
+  champDesc.appendChild(el('p', 'carte-section__champ-texte', civ.description));
+  champs.appendChild(champDesc);
+
+  const champMode = el('div', 'carte-section__champ');
+  champMode.appendChild(el('span', 'carte-section__champ-titre', 'Mode de production'));
+  champMode.appendChild(el('p', 'carte-section__champ-texte', nomModeProductionDepuisId(civ.modeProduction)));
+  champs.appendChild(champMode);
+
+  article.appendChild(champs);
+
+  // ── Pied — conflits liés (uniquement si non vide)
+  if (civ.conflitsLies && civ.conflitsLies.length > 0) {
+    const pied = el('div', 'carte-section__pied');
+    pied.appendChild(el('span', 'carte-section__champ-titre', 'Conflits associés'));
+    civ.conflitsLies.forEach(id => pied.appendChild(el('span', 'tag', nomConflitDepuisId(id))));
+    article.appendChild(pied);
+  }
+
+  return article;
+}
+
+function initCivilisations() {
+  const grille = document.getElementById('grille-civilisations');
+  const champRecherche = document.getElementById('champ-recherche');
+  const filtreEpoque   = document.getElementById('filtre-epoque');
+  if (!grille || typeof civilisations === 'undefined') return;
+
+  let termeRecherche = '';
+  let epoqueActive   = 'toutes';
+  let chipActif      = null; // bouton de frise actuellement actif
+
+  function filtrerEtAfficher() {
+    const terme = normaliser(termeRecherche);
+
+    const liste = civilisations.filter(civ => {
+      // Filtre époque dérivée du mode de production
+      if (epoqueActive !== 'toutes' && epoqueDeCivilisation(civ) !== epoqueActive) return false;
+      // Filtre recherche textuelle
+      if (terme) {
+        const haystack = normaliser(
+          civ.nom + ' ' + civ.region + ' ' + civ.description + ' ' +
+          civ.conflitsLies.map(nomConflitDepuisId).join(' ')
+        );
+        if (!haystack.includes(terme)) return false;
+      }
+      return true;
+    });
+
+    grille.innerHTML = '';
+    liste.length === 0
+      ? afficherMessageVide(grille)
+      : liste.forEach(c => grille.appendChild(creerCarteCivilisation(c)));
+    mettreAJourCompteur(liste.length);
+  }
+
+  // Frise : clic sur un chip → scroll vers la carte correspondante
+  construireFriseCivilisations(civilisations, (id, btnClique) => {
+    // Désactiver le chip précédemment actif
+    if (chipActif && chipActif !== btnClique) {
+      chipActif.classList.remove('frise-legere__item--actif');
+    }
+    // Deuxième clic sur le même chip : désactiver
+    if (chipActif === btnClique) {
+      btnClique.classList.remove('frise-legere__item--actif');
+      chipActif = null;
+      return;
+    }
+    btnClique.classList.add('frise-legere__item--actif');
+    chipActif = btnClique;
+
+    // Scroll vers la carte (l'article a l'id "civ-[id]")
+    const cible = document.getElementById('civ-' + id);
+    if (cible) {
+      cible.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
+  if (champRecherche) {
+    let minuterie = null;
+    champRecherche.addEventListener('input', () => {
+      clearTimeout(minuterie);
+      minuterie = setTimeout(() => {
+        termeRecherche = champRecherche.value.trim();
+        filtrerEtAfficher();
+      }, 200);
+    });
+  }
+
+  if (filtreEpoque) {
+    filtreEpoque.addEventListener('change', () => {
+      epoqueActive = filtreEpoque.value;
+      filtrerEtAfficher();
+    });
+  }
+
+  filtrerEtAfficher();
+}
+
+/* ============================================================
+   III. CONFLITS
+   ============================================================ */
+
+/**
+ * Crée la carte DOM d'un conflit avec accordéon batailles.
+ * Structure : En-tête (lien + période + badge importance) / Belligérants VS /
+ *             Analyse — lutte des classes / Révoltes liées (si trouvées) /
+ *             Accordéon batailles (toggle au clic)
+ */
+function creerCarteConflit(conflit) {
+  const article = el('article', 'carte-section carte-conflit');
+  article.setAttribute('role', 'listitem');
+  article.dataset.id = conflit.id;
+
+  // ── En-tête
+  const entete = el('div', 'carte-section__entete');
+  const lien = el('a', 'carte-section__lien-titre');
+  lien.href = `detail.html?type=conflit&id=${echapper(conflit.id)}`;
+  lien.appendChild(el('h2', 'carte-section__titre', conflit.nom));
+  entete.appendChild(lien);
+
+  const meta = el('div', 'carte-section__meta');
+  meta.appendChild(el('span', null, `${conflit.dateAfficheeDebut} – ${conflit.dateAfficheeFin}`));
+  meta.appendChild(separateurMeta());
+  const badge = el('span', `badge ${classeImportance(conflit.importance)}`);
+  badge.textContent = conflit.importance.charAt(0).toUpperCase() + conflit.importance.slice(1);
+  meta.appendChild(badge);
+  entete.appendChild(meta);
+  article.appendChild(entete);
+
+  // ── Champs
+  const champs = el('div', 'carte-section__champs');
+
+  // Bloc belligérants
+  const blocBell = el('div', 'detail-belligerants');
+  blocBell.style.padding = 'var(--espace-s)';
+  const coteA = el('div', 'belligerant__nom', conflit.belligerantsA);
+  const vs = el('div', 'vs-separateur', 'VS');
+  vs.setAttribute('aria-hidden', 'true');
+  const coteB = el('div', 'belligerant__nom', conflit.belligerantsB);
+  blocBell.append(coteA, vs, coteB);
+  champs.appendChild(blocBell);
+
+  // Analyse — lutte des classes
+  const champAnalyse = el('div', 'carte-section__champ');
+  champAnalyse.appendChild(el('span', 'carte-section__champ-titre', 'Analyse — lutte des classes'));
+  champAnalyse.appendChild(el('p', 'carte-section__champ-texte', conflit.analyseClasses));
+  champs.appendChild(champAnalyse);
+
+  // Révoltes liées (détectées par chevauchement de dates)
+  const liees = revoltesLieesAuConflit(conflit);
+  if (liees.length > 0) {
+    const champRevoltes = el('div', 'carte-section__champ');
+    champRevoltes.appendChild(el('span', 'carte-section__champ-titre', 'Révoltes liées'));
+    liees.forEach(r => {
+      const tag = el('a', 'tag tag--lien', r.nom);
+      tag.href = 'revoltes.html';
+      champRevoltes.appendChild(tag);
+    });
+    champs.appendChild(champRevoltes);
+  }
+
+  article.appendChild(champs);
+
+  // ── Accordéon batailles
+  if (conflit.batailles && conflit.batailles.length > 0) {
+    const accordeon = el('div', 'carte-conflit__batailles');
+    const idListe   = 'batailles-' + conflit.id;
+
+    const btnAccordeon = el('button', 'carte-conflit__batailles-btn');
+    btnAccordeon.setAttribute('aria-expanded', 'false');
+    btnAccordeon.setAttribute('aria-controls', idListe);
+    btnAccordeon.appendChild(el('span', null, `Batailles (${conflit.batailles.length})`));
+    btnAccordeon.appendChild(el('span', 'carte-conflit__batailles-chevron', '▾'));
+
+    btnAccordeon.addEventListener('click', () => {
+      const ouvert = article.classList.toggle('carte-conflit--ouvert');
+      btnAccordeon.setAttribute('aria-expanded', String(ouvert));
+    });
+
+    const listeBatailles = el('ul', 'carte-conflit__batailles-liste');
+    listeBatailles.id = idListe;
+
+    conflit.batailles.forEach(idBat => {
+      const info = infoBatailleDepuisId(idBat);
+      const li   = el('li', 'carte-conflit__bataille-item');
+      const lienBat = el('a', 'carte-conflit__bataille-lien');
+      lienBat.href = `bataille.html?id=${echapper(idBat)}`;
+      lienBat.appendChild(el('span', 'carte-conflit__bataille-nom', info.nom));
+      lienBat.appendChild(el('span', 'carte-conflit__bataille-date', info.date));
+      li.appendChild(lienBat);
+      listeBatailles.appendChild(li);
+    });
+
+    accordeon.appendChild(btnAccordeon);
+    accordeon.appendChild(listeBatailles);
+    article.appendChild(accordeon);
+  }
+
+  return article;
+}
+
+function initConflits() {
+  const grille           = document.getElementById('grille-conflits');
+  const champRecherche   = document.getElementById('champ-recherche');
+  const filtreEpoque     = document.getElementById('filtre-epoque');
+  const filtreImportance = document.getElementById('filtre-importance');
+  const filtreTri        = document.getElementById('filtre-tri');
+  if (!grille || typeof conflits === 'undefined') return;
+
+  let termeRecherche   = '';
+  let epoqueActive     = 'toutes';
+  let importanceActive = 'toutes';
+  let triActif         = 'date-asc';
+
+  function filtrerEtAfficher() {
+    const terme = normaliser(termeRecherche);
+
+    let liste = conflits.filter(c => {
+      if (epoqueActive !== 'toutes' && c.epoque !== epoqueActive) return false;
+      // Normalise l'importance avant comparaison ("décisive" → "decisive")
+      if (importanceActive !== 'toutes' && normaliser(c.importance) !== importanceActive) return false;
+      if (terme) {
+        const haystack = normaliser(
+          c.nom + ' ' + c.belligerantsA + ' ' + c.belligerantsB + ' ' + c.description
+        );
+        if (!haystack.includes(terme)) return false;
+      }
+      return true;
+    });
+
+    // Tri
+    liste = liste.slice().sort((a, b) => {
+      switch (triActif) {
+        case 'date-asc':  return a.dateDebut - b.dateDebut;
+        case 'date-desc': return b.dateDebut - a.dateDebut;
+        case 'nom-asc':   return a.nom.localeCompare(b.nom, 'fr');
+        case 'nom-desc':  return b.nom.localeCompare(a.nom, 'fr');
+        default:          return 0;
+      }
+    });
+
+    grille.innerHTML = '';
+    liste.length === 0
+      ? afficherMessageVide(grille)
+      : liste.forEach(c => grille.appendChild(creerCarteConflit(c)));
+    mettreAJourCompteur(liste.length);
+  }
+
+  if (champRecherche) {
+    let minuterie = null;
+    champRecherche.addEventListener('input', () => {
+      clearTimeout(minuterie);
+      minuterie = setTimeout(() => {
+        termeRecherche = champRecherche.value.trim();
+        filtrerEtAfficher();
+      }, 200);
+    });
+  }
+  if (filtreEpoque) {
+    filtreEpoque.addEventListener('change', () => {
+      epoqueActive = filtreEpoque.value;
+      filtrerEtAfficher();
+    });
+  }
+  if (filtreImportance) {
+    filtreImportance.addEventListener('change', () => {
+      importanceActive = filtreImportance.value;
+      filtrerEtAfficher();
+    });
+  }
+  if (filtreTri) {
+    filtreTri.addEventListener('change', () => {
+      triActif = filtreTri.value;
+      filtrerEtAfficher();
+    });
+  }
+
+  filtrerEtAfficher();
+}
+
+/* ============================================================
+   IV. RÉVOLTES
+   ============================================================ */
+
+/**
+ * Crée la carte DOM d'une révolte.
+ * Structure : En-tête (lien + date + lieu + meneur) / Présentation /
+ *             Classes en lutte / Pied (badge résultat)
+ */
+function creerCarteRevolte(revolte) {
+  const article = el('article', 'carte-section');
+  article.setAttribute('role', 'listitem');
+  article.dataset.id = revolte.id;
+
+  // ── En-tête avec lien vers détail
+  const entete = el('div', 'carte-section__entete');
+  const lien = el('a', 'carte-section__lien-titre');
+  lien.href = `detail.html?type=revolte&id=${echapper(revolte.id)}`;
+  lien.appendChild(el('h2', 'carte-section__titre', revolte.nom));
+  entete.appendChild(lien);
+
+  const meta = el('div', 'carte-section__meta');
+  meta.appendChild(el('span', null, revolte.dateAffichee));
+  meta.appendChild(separateurMeta());
+  meta.appendChild(el('span', null, revolte.lieu));
+  if (revolte.meneur) {
+    meta.appendChild(separateurMeta());
+    meta.appendChild(el('span', null, `Meneur : ${revolte.meneur}`));
+  }
+  entete.appendChild(meta);
+  article.appendChild(entete);
+
+  // ── Champs
+  const champs = el('div', 'carte-section__champs');
+
+  const champDesc = el('div', 'carte-section__champ');
+  champDesc.appendChild(el('span', 'carte-section__champ-titre', 'Présentation'));
+  champDesc.appendChild(el('p', 'carte-section__champ-texte', revolte.description));
+  champs.appendChild(champDesc);
+
+  // Classes en lutte : insurgées (gras) contre dominantes (italique)
+  const champClasses = el('div', 'carte-section__champ');
+  champClasses.appendChild(el('span', 'carte-section__champ-titre', 'Classes en lutte'));
+  const texteClasses = el('p', 'carte-section__champ-texte');
+  texteClasses.appendChild(el('strong', null, revolte.classesEnLutte.insurgees));
+  texteClasses.appendChild(document.createTextNode(' contre '));
+  texteClasses.appendChild(el('em', null, revolte.classesEnLutte.dominantes));
+  champClasses.appendChild(texteClasses);
+  champs.appendChild(champClasses);
+
+  article.appendChild(champs);
+
+  // ── Pied — badge résultat
+  const pied = el('div', 'carte-section__pied');
+  pied.appendChild(el('span', 'carte-section__champ-titre', 'Résultat'));
+  const badge = el('span', `badge ${classeResultat(revolte.resultat)}`);
+  badge.textContent = libelleResultat(revolte.resultat);
+  pied.appendChild(badge);
+  article.appendChild(pied);
+
+  return article;
+}
+
+function initRevoltes() {
+  const grille         = document.getElementById('grille-revoltes');
+  const champRecherche = document.getElementById('champ-recherche');
+  const filtreEpoque   = document.getElementById('filtre-epoque');
+  const filtreResultat = document.getElementById('filtre-resultat');
+  if (!grille || typeof revoltes === 'undefined') return;
+
+  let termeRecherche = '';
+  let epoqueActive   = 'toutes';
+  let resultatActif  = 'tous';
+
+  function filtrerEtAfficher() {
+    const terme = normaliser(termeRecherche);
+
+    const liste = revoltes.filter(r => {
+      if (epoqueActive !== 'toutes' && epoqueDeAnnee(r.dateDebut) !== epoqueActive) return false;
+      if (resultatActif !== 'tous' && r.resultat !== resultatActif) return false;
+      if (terme) {
+        const haystack = normaliser(
+          r.nom + ' ' + r.lieu + ' ' + (r.meneur || '') + ' ' +
+          r.classesEnLutte.insurgees + ' ' + r.classesEnLutte.dominantes + ' ' +
+          r.description
+        );
+        if (!haystack.includes(terme)) return false;
+      }
+      return true;
+    });
+
+    grille.innerHTML = '';
+    liste.length === 0
+      ? afficherMessageVide(grille)
+      : liste.forEach(r => grille.appendChild(creerCarteRevolte(r)));
+    mettreAJourCompteur(liste.length);
+  }
+
+  if (champRecherche) {
+    let minuterie = null;
+    champRecherche.addEventListener('input', () => {
+      clearTimeout(minuterie);
+      minuterie = setTimeout(() => {
+        termeRecherche = champRecherche.value.trim();
+        filtrerEtAfficher();
+      }, 200);
+    });
+  }
+  if (filtreEpoque) {
+    filtreEpoque.addEventListener('change', () => {
+      epoqueActive = filtreEpoque.value;
+      filtrerEtAfficher();
+    });
+  }
+  if (filtreResultat) {
+    filtreResultat.addEventListener('change', () => {
+      resultatActif = filtreResultat.value;
+      filtrerEtAfficher();
+    });
+  }
+
+  filtrerEtAfficher();
+}
+
+/* ============================================================
+   PAGE DÉTAIL BATAILLE (bataille.html — data-page="detail")
+   Pages legacy conservées telles quelles pour la compatibilité
+   ============================================================ */
+
+const LIBELLES_EPOQUE = {
+  antiquite:     'Antiquité',
+  'moyen-age':   'Moyen Âge',
+  moderne:       'Époque moderne',
+  contemporaine: 'Époque contemporaine',
+  xxe:           'XXe siècle',
+};
+
+/** Classe du badge d'importance pour les batailles legacy. */
+function classeBadge(importance) {
+  return 'badge-' + normaliser(importance);
+}
+
+function afficherPageDetail() {
+  const params    = new URLSearchParams(window.location.search);
+  const id        = params.get('id');
+  const conteneur = document.getElementById('detail-conteneur');
   if (!conteneur) return;
 
-  const bataille = batailles.find(b => b.id === id);
+  const bataille = (typeof batailles !== 'undefined')
+    ? batailles.find(b => b.id === id)
+    : null;
 
   if (!bataille) {
-    afficherErreurBatailleIntrouvable(conteneur, id);
+    afficherErreurIntrouvable(conteneur, 'Bataille introuvable', id);
     return;
   }
 
-  // Titre de l'onglet
-  document.title = `${bataille.nom} — Histoire des Batailles`;
-
+  document.title = `${bataille.nom} — Praxis`;
   construireDetailBataille(conteneur, bataille);
 }
 
-/**
- * Construit et injecte le HTML de la page détail pour une bataille donnée.
- * @param {HTMLElement} conteneur
- * @param {Object} bataille
- */
 function construireDetailBataille(conteneur, bataille) {
   conteneur.innerHTML = '';
 
-  // --- En-tête ---
-  const entete = document.createElement('header');
-  entete.className = 'detail-entete';
-
-  const surtitre = document.createElement('div');
-  surtitre.className = 'detail-entete__surtitre';
-
-  const spanDate = document.createElement('span');
-  spanDate.className = 'detail-entete__date';
-  spanDate.textContent = bataille.dateAffichee;
-
-  const spanConflit = document.createElement('span');
-  spanConflit.className = 'detail-entete__conflit';
-  spanConflit.textContent = bataille.conflit;
-
-  const spanBadge = document.createElement('span');
-  spanBadge.className = `badge ${classeBadge(bataille.importance)}`;
+  // En-tête
+  const entete = el('header', 'detail-entete');
+  const surtitre = el('div', 'detail-entete__surtitre');
+  const spanDate = el('span', 'detail-entete__date', bataille.dateAffichee);
+  const spanConf = el('span', 'detail-entete__conflit', bataille.conflit);
+  const spanBadge = el('span', `badge ${classeBadge(bataille.importance)}`);
   spanBadge.textContent = bataille.importance.charAt(0).toUpperCase() + bataille.importance.slice(1);
+  surtitre.append(spanDate, spanConf, spanBadge);
+  entete.append(surtitre, el('h1', 'detail-entete__titre', bataille.nom));
+  const lieu = el('div', 'detail-entete__lieu', `⚑ ${bataille.lieu}`);
+  entete.appendChild(lieu);
 
-  surtitre.append(spanDate, spanConflit, spanBadge);
+  // Corps
+  const corps = el('div', 'detail-corps');
+  const principal = el('div', 'detail-principal');
 
-  const titre = document.createElement('h1');
-  titre.className = 'detail-entete__titre';
-  titre.textContent = bataille.nom;
+  // Belligérants
+  const secBell = creerSectionDetail('Belligérants', null);
+  secBell.appendChild(creerBlocBelligerants(bataille));
+  principal.appendChild(secBell);
+  principal.appendChild(creerSectionDetail('Déroulement', bataille.description));
+  principal.appendChild(creerSectionDetail('Conséquences historiques', bataille.consequence));
 
-  const lieu = document.createElement('div');
-  lieu.className = 'detail-entete__lieu';
-  lieu.textContent = `⚑ ${bataille.lieu}`;
-
-  entete.append(surtitre, titre, lieu);
-
-  // --- Corps principal ---
-  const corps = document.createElement('div');
-  corps.className = 'detail-corps';
-
-  // Colonne principale
-  const principal = document.createElement('div');
-  principal.className = 'detail-principal';
-
-  // Section belligérants
-  const sectionBelligerants = creerSectionDetail('Belligérants', null);
-  const blocBelligerants = creerBlocBelligerants(bataille);
-  sectionBelligerants.appendChild(blocBelligerants);
-  principal.appendChild(sectionBelligerants);
-
-  // Section déroulement
-  const sectionDeroulement = creerSectionDetail('Déroulement', bataille.description);
-  principal.appendChild(sectionDeroulement);
-
-  // Section conséquences
-  const sectionConsequence = creerSectionDetail('Conséquences historiques', bataille.consequence);
-  principal.appendChild(sectionConsequence);
-
-  // Colonne latérale — fiche
-  const fiche = construireFicheRecap(bataille);
-
-  corps.append(principal, fiche);
-
+  corps.append(principal, construireFicheRecap(bataille));
   conteneur.append(entete, corps);
 }
 
-/**
- * Crée une section titrée avec un texte optionnel.
- * @param {string} titre
- * @param {string|null} texte
- * @returns {HTMLElement}
- */
 function creerSectionDetail(titre, texte) {
-  const section = document.createElement('section');
-
-  const titreSec = document.createElement('h2');
-  titreSec.className = 'detail-section__titre';
-  titreSec.textContent = titre;
-  section.appendChild(titreSec);
-
-  if (texte) {
-    const p = document.createElement('p');
-    p.className = 'detail-section__texte';
-    p.textContent = texte;
-    section.appendChild(p);
-  }
-
+  const section = el('section');
+  section.appendChild(el('h2', 'detail-section__titre', titre));
+  if (texte) section.appendChild(el('p', 'detail-section__texte', texte));
   return section;
 }
 
-/**
- * Crée le bloc visuel d'opposition des belligérants.
- * @param {Object} bataille
- * @returns {HTMLElement}
- */
 function creerBlocBelligerants(bataille) {
-  const vainqueurNormalise = normaliser(bataille.vainqueur);
-  const estVainqueurA = normaliser(bataille.belligerants.a).includes(vainqueurNormalise)
-    || vainqueurNormalise.includes(normaliser(bataille.belligerants.a).split(' ')[0]);
+  const vainqNorm = normaliser(bataille.vainqueur);
+  const estVainqA = normaliser(bataille.belligerants.a).includes(vainqNorm)
+    || vainqNorm.includes(normaliser(bataille.belligerants.a).split(' ')[0]);
 
-  const bloc = document.createElement('div');
-  bloc.className = 'detail-belligerants';
-
-  const coteA = creerCoteBelligerant(
-    bataille.belligerants.a,
-    estVainqueurA
+  const bloc = el('div', 'detail-belligerants');
+  bloc.append(
+    creerCoteBelligerant(bataille.belligerants.a, estVainqA),
+    (() => { const v = el('div', 'vs-separateur', 'VS'); v.setAttribute('aria-hidden', 'true'); return v; })(),
+    creerCoteBelligerant(bataille.belligerants.b, !estVainqA)
   );
-
-  const vs = document.createElement('div');
-  vs.className = 'vs-separateur';
-  vs.setAttribute('aria-hidden', 'true');
-  vs.textContent = 'VS';
-
-  const coteB = creerCoteBelligerant(
-    bataille.belligerants.b,
-    !estVainqueurA
-  );
-
-  bloc.append(coteA, vs, coteB);
   return bloc;
 }
 
-/**
- * Crée un côté du bloc belligérants.
- * @param {string} nom
- * @param {boolean} estVainqueur
- * @returns {HTMLElement}
- */
 function creerCoteBelligerant(nom, estVainqueur) {
-  const div = document.createElement('div');
-  div.className = estVainqueur ? 'belligerant belligerant--vainqueur' : 'belligerant';
-
+  const div = el('div', estVainqueur ? 'belligerant belligerant--vainqueur' : 'belligerant');
   if (estVainqueur) {
-    const couronne = document.createElement('span');
-    couronne.className = 'belligerant__couronne';
+    const couronne = el('span', 'belligerant__couronne', '♛');
     couronne.setAttribute('aria-label', 'Vainqueur');
-    couronne.textContent = '♛';
     div.appendChild(couronne);
   }
-
-  const label = document.createElement('div');
-  label.className = 'belligerant__label';
-  label.textContent = estVainqueur ? 'Vainqueur' : 'Défait';
-
-  const nomEl = document.createElement('div');
-  nomEl.className = 'belligerant__nom';
-  nomEl.textContent = nom;
-
-  div.append(label, nomEl);
+  div.appendChild(el('div', 'belligerant__label', estVainqueur ? 'Vainqueur' : 'Défait'));
+  div.appendChild(el('div', 'belligerant__nom', nom));
   return div;
 }
 
-/**
- * Construit la fiche récapitulative latérale.
- * @param {Object} bataille
- * @returns {HTMLElement}
- */
 function construireFicheRecap(bataille) {
-  const fiche = document.createElement('aside');
-  fiche.className = 'detail-fiche';
-
-  const titreF = document.createElement('div');
-  titreF.className = 'detail-fiche__titre';
-  titreF.textContent = 'Fiche récapitulative';
-
-  const contenu = document.createElement('div');
-  contenu.className = 'detail-fiche__contenu';
-
-  const lignes = [
-    { cle: 'Date',       valeur: bataille.dateAffichee },
-    { cle: 'Lieu',       valeur: bataille.lieu },
-    { cle: 'Conflit',    valeur: bataille.conflit },
-    { cle: 'Vainqueur',  valeur: bataille.vainqueur },
-    { cle: 'Pertes',     valeur: bataille.pertes },
-    { cle: 'Époque',     valeur: LIBELLES_EPOQUE[bataille.epoque] || bataille.epoque },
-    { cle: 'Importance', valeur: bataille.importance.charAt(0).toUpperCase() + bataille.importance.slice(1) },
-  ];
-
-  lignes.forEach(({ cle, valeur }) => {
-    const ligne = document.createElement('div');
-    ligne.className = 'detail-fiche__ligne';
-
-    const cleEl = document.createElement('dt');
-    cleEl.className = 'detail-fiche__cle';
-    cleEl.textContent = cle;
-
-    const valeurEl = document.createElement('dd');
-    valeurEl.className = 'detail-fiche__valeur';
-    valeurEl.textContent = valeur;
-
-    ligne.append(cleEl, valeurEl);
+  const fiche = el('aside', 'detail-fiche');
+  fiche.appendChild(el('div', 'detail-fiche__titre', 'Fiche récapitulative'));
+  const contenu = el('div', 'detail-fiche__contenu');
+  [
+    ['Date',       bataille.dateAffichee],
+    ['Lieu',       bataille.lieu],
+    ['Conflit',    bataille.conflit],
+    ['Vainqueur',  bataille.vainqueur],
+    ['Pertes',     bataille.pertes],
+    ['Époque',     LIBELLES_EPOQUE[bataille.epoque] || bataille.epoque],
+    ['Importance', bataille.importance.charAt(0).toUpperCase() + bataille.importance.slice(1)],
+  ].forEach(([cle, valeur]) => {
+    const ligne = el('div', 'detail-fiche__ligne');
+    ligne.appendChild(el('dt', 'detail-fiche__cle', cle));
+    ligne.appendChild(el('dd', 'detail-fiche__valeur', valeur));
     contenu.appendChild(ligne);
   });
-
-  fiche.append(titreF, contenu);
+  fiche.appendChild(contenu);
   return fiche;
 }
 
-/**
- * Affiche un message d'erreur élégant si la bataille est introuvable.
- * @param {HTMLElement} conteneur
- * @param {string|null} id
- */
-function afficherErreurBatailleIntrouvable(conteneur, id) {
-  document.title = 'Bataille introuvable — Histoire des Batailles';
-
-  conteneur.innerHTML = '';
-
-  const erreur = document.createElement('div');
-  erreur.className = 'page-erreur';
-
-  const code = document.createElement('div');
-  code.className = 'page-erreur__code';
-  code.setAttribute('aria-hidden', 'true');
-  code.textContent = '404';
-
-  const titre = document.createElement('p');
-  titre.className = 'page-erreur__titre';
-  titre.textContent = 'Bataille introuvable';
-
-  const message = document.createElement('p');
-  message.className = 'page-erreur__message';
-  message.textContent = id
-    ? `Aucune bataille ne correspond à l'identifiant « ${id} » dans nos archives.`
-    : 'Aucun identifiant de bataille n\'a été fourni dans l\'URL.';
-
-  const lienRetour = document.createElement('a');
-  lienRetour.href = 'index.html';
-  lienRetour.className = 'btn-retour';
-  lienRetour.innerHTML = '<span class="btn-retour__fleche" aria-hidden="true">←</span> Retour aux archives';
-
-  erreur.append(code, titre, message, lienRetour);
-  conteneur.appendChild(erreur);
-}
-
 /* ============================================================
-   FRISE MULTI-NIVEAUX — MOTEUR TEMPOREL
+   PAGE DÉTAIL MULTI (detail.html — data-page="detail-multi")
+   Dispatche selon ?type= vers le bon template
    ============================================================ */
 
-let FRISE_DATE_MIN, FRISE_DATE_MAX;
-const PX_PAR_AN_BASE   = 0.4;
-const HAUTEUR_SOUS_LIGNE = 44; // px par sous-ligne de la frise
-const MARGE_SOUS_LIGNE   = 6;  // px de marge verticale dans chaque sous-ligne
-let niveauZoom = 2;
-
-/**
- * Calcule les bornes temporelles globales à partir de tous les jeux de données.
- */
-function calculerBornesTemporelles() {
-  const dates = [
-    ...civilisations.flatMap(c => [c.dateDebut, c.dateFin]),
-    ...modesProduction.flatMap(m => [m.dateDebut, m.dateFin]),
-    ...conflits.flatMap(c => [c.dateDebut, c.dateFin]),
-    ...batailles.flatMap(b => [b.dateDebut ?? b.date, b.dateFin ?? b.date]),
-    ...revoltes.flatMap(r => [r.dateDebut, r.dateFin]),
-  ];
-  FRISE_DATE_MIN = Math.min(...dates) - 50;
-  FRISE_DATE_MAX = Math.max(...dates) + 50;
-}
-
-function largeurFrise() {
-  return Math.round((FRISE_DATE_MAX - FRISE_DATE_MIN) * PX_PAR_AN_BASE * niveauZoom);
-}
-
-function anneeVersPixels(annee) {
-  return Math.round((annee - FRISE_DATE_MIN) * PX_PAR_AN_BASE * niveauZoom);
-}
-
-function dureeVersPixels(debut, fin) {
-  return Math.max(Math.round((fin - debut) * PX_PAR_AN_BASE * niveauZoom), 10);
-}
-
-/* ============================================================
-   FRISE MULTI-NIVEAUX — AXE TEMPOREL
-   ============================================================ */
-
-/**
- * Construit l'axe avec graduations (siècle = marque majeure, décennie = mineure).
- */
-function construireAxeTemporel() {
-  const axe = document.getElementById('frise-axe-temporel');
-  if (!axe) return;
-  axe.innerHTML = '';
-
-  const fragment = document.createDocumentFragment();
-
-  // Intervalle adaptatif selon le zoom
-  const anneesVisibles = (FRISE_DATE_MAX - FRISE_DATE_MIN) / niveauZoom;
-  let pasMineur, pasMajeur;
-  if (anneesVisibles > 5000) {
-    pasMineur = 500; pasMajeur = 1000;
-  } else if (anneesVisibles > 2000) {
-    pasMineur = 100; pasMajeur = 500;
-  } else if (anneesVisibles > 500) {
-    pasMineur = 50; pasMajeur = 100;
-  } else if (anneesVisibles > 200) {
-    pasMineur = 10; pasMajeur = 50;
-  } else {
-    pasMineur = 5; pasMajeur = 25;
-  }
-
-  // Première marque alignée sur le pas
-  const debut = Math.ceil(FRISE_DATE_MIN / pasMineur) * pasMineur;
-
-  for (let annee = debut; annee <= FRISE_DATE_MAX; annee += pasMineur) {
-    const estMajeure = annee % pasMajeur === 0;
-    const marque = document.createElement('div');
-    marque.className = 'frise-marque' + (estMajeure ? ' frise-marque--majeure' : '');
-    marque.style.left = anneeVersPixels(annee) + 'px';
-
-    if (estMajeure) {
-      const label = document.createElement('span');
-      label.className = 'frise-marque__label';
-      label.textContent = annee < 0 ? `${Math.abs(annee)} av.` : String(annee);
-      marque.appendChild(label);
-    }
-
-    fragment.appendChild(marque);
-  }
-
-  axe.appendChild(fragment);
-}
-
-/* ============================================================
-   FRISE MULTI-NIVEAUX — RENDU DES NIVEAUX
-   ============================================================ */
-
-/**
- * Trouve un objet dans tous les jeux de données par type et id.
- * @param {string} type
- * @param {string} id
- * @returns {Object|null}
- */
-function trouverObjetParTypeEtId(type, id) {
-  switch (type) {
-    case 'bataille':      return batailles.find(b => b.id === id) || null;
-    case 'civilisation':  return civilisations.find(c => c.id === id) || null;
-    case 'mode-production': return modesProduction.find(m => m.id === id) || null;
-    case 'conflit':       return conflits.find(c => c.id === id) || null;
-    case 'revolte':       return revoltes.find(r => r.id === id) || null;
-    default:              return null;
-  }
-}
-
-/**
- * Répartit les objets sur des couloirs sans chevauchement (algorithme greedy).
- * @param {Array} donnees
- * @returns {Array<{objet: Object, ligne: number}>}
- */
-function calculerSousLignes(donnees) {
-  const tries = [...donnees].sort((a, b) =>
-    (a.dateDebut ?? a.date) - (b.dateDebut ?? b.date)
-  );
-  const couloirs = []; // couloirs[i] = { fin: number, objets: [] }
-
-  tries.forEach(objet => {
-    const debut = objet.dateDebut ?? objet.date;
-    const fin   = objet.dateFin   ?? objet.date;
-    const idx   = couloirs.findIndex(c => debut >= c.fin);
-    if (idx !== -1) {
-      couloirs[idx].fin = fin;
-      couloirs[idx].objets.push({ objet, ligne: idx });
-    } else {
-      couloirs.push({ fin, objets: [{ objet, ligne: couloirs.length }] });
-    }
-  });
-
-  return couloirs.flatMap(c => c.objets);
-}
-
-/**
- * Crée un élément DOM positionné pour la frise.
- * @param {Object} objet
- * @param {number} ligne — index de sous-ligne (0 = première ligne)
- * @returns {HTMLElement}
- */
-function creerElementFrise(objet, ligne = 0) {
-  const debut = objet.dateDebut ?? objet.date;
-  const fin   = objet.dateFin   ?? objet.date;
-  const duree = fin - debut;
-
-  const el = document.createElement('div');
-  el.className = 'frise-element' + (duree < 2 ? ' frise-element--point' : '');
-  el.setAttribute('role', 'button');
-  el.setAttribute('tabindex', '0');
-  el.dataset.id   = objet.id;
-  el.dataset.type = objet.type;
-  el.style.left   = anneeVersPixels(debut) + 'px';
-  el.style.width  = dureeVersPixels(debut, fin) + 'px';
-  el.style.top    = (ligne * HAUTEUR_SOUS_LIGNE + MARGE_SOUS_LIGNE) + 'px';
-  el.style.height = (HAUTEUR_SOUS_LIGNE - 2 * MARGE_SOUS_LIGNE) + 'px';
-
-  const label = objet.dateAfficheeDebut
-    ? `${objet.nom} (${objet.dateAfficheeDebut} – ${objet.dateAfficheeFin})`
-    : `${objet.nom} (${objet.dateAffichee || debut})`;
-  el.setAttribute('aria-label', label);
-
-  const nom = document.createElement('span');
-  nom.className = 'frise-element__nom';
-  nom.textContent = objet.nom;
-  el.appendChild(nom);
-
-  const url = objet.type === 'bataille'
-    ? `bataille.html?id=${encodeURIComponent(objet.id)}`
-    : `detail.html?type=${encodeURIComponent(objet.type)}&id=${encodeURIComponent(objet.id)}`;
-
-  el.addEventListener('click', () => { window.location.href = url; });
-  el.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      window.location.href = url;
-    }
-  });
-
-  return el;
-}
-
-/**
- * Remplit un niveau de la frise avec ses données.
- * @param {string} id
- * @param {Array} donnees
- */
-function construireNiveau(id, donnees) {
-  const niveau = document.getElementById('frise-niveau-' + id);
-  if (!niveau) return;
-  niveau.innerHTML = '';
-
-  const placements = calculerSousLignes(donnees);
-  const nbLignes   = placements.reduce((max, p) => Math.max(max, p.ligne + 1), 1);
-  const hauteurPx  = nbLignes * HAUTEUR_SOUS_LIGNE;
-
-  niveau.style.height = hauteurPx + 'px';
-  const label = document.querySelector(`.frise-niveau-label[data-niveau="${id}"]`);
-  if (label) label.style.height = hauteurPx + 'px';
-
-  const fragment = document.createDocumentFragment();
-  placements.forEach(({ objet, ligne }) =>
-    fragment.appendChild(creerElementFrise(objet, ligne))
-  );
-  niveau.appendChild(fragment);
-}
-
-/**
- * Point d'entrée — construit la frise multi-niveaux complète.
- */
-function construireFriseMulti() {
-  calculerBornesTemporelles();
-
-  const contenu = document.getElementById('frise-scroll-contenu');
-  if (!contenu) return;
-  contenu.style.width = largeurFrise() + 'px';
-
-  construireAxeTemporel();
-  construireNiveau('civilisations',    civilisations);
-  construireNiveau('modes-production', modesProduction);
-  construireNiveau('conflits',         conflits);
-  construireNiveau('batailles',        batailles);
-  construireNiveau('revoltes',         revoltes);
-
-  activerScrollFriseMulti();
-  activerTooltipFrise();
-  brancherControlesZoom();
-  brancherToggleNiveaux();
-  appliquerZoom(2);
-}
-
-/* ============================================================
-   FRISE MULTI-NIVEAUX — SCROLL & INTERACTION
-   ============================================================ */
-
-/**
- * Active le glisser-déplacer sur la zone scrollable de la frise multi.
- */
-function activerScrollFriseMulti() {
-  const zone = document.getElementById('frise-scroll-zone');
-  if (!zone) return;
-
-  let glissement = { actif: false, depart: 0, scrollDepart: 0 };
-
-  zone.addEventListener('mousedown', e => {
-    glissement = { actif: true, depart: e.clientX, scrollDepart: zone.scrollLeft };
-    zone.style.cursor = 'grabbing';
-  });
-
-  document.addEventListener('mousemove', e => {
-    if (!glissement.actif) return;
-    zone.scrollLeft = glissement.scrollDepart - (e.clientX - glissement.depart);
-  });
-
-  document.addEventListener('mouseup', () => {
-    if (!glissement.actif) return;
-    glissement.actif = false;
-    zone.style.cursor = 'grab';
-  });
-}
-
-/**
- * Active le tooltip au survol des éléments de la frise.
- */
-function activerTooltipFrise() {
-  const tooltip = document.getElementById('frise-tooltip');
-  if (!tooltip) return;
-
-  document.addEventListener('mouseover', e => {
-    const el = e.target.closest('.frise-element');
-    if (!el) return;
-    const objet = trouverObjetParTypeEtId(el.dataset.type, el.dataset.id);
-    if (!objet) return;
-
-    const debut = objet.dateAfficheeDebut || objet.dateAffichee || String(objet.dateDebut ?? objet.date);
-    const fin   = objet.dateAfficheeFin;
-    const periode = fin && fin !== debut ? `${debut} – ${fin}` : debut;
-
-    const typeLabels = {
-      'bataille':        'Bataille',
-      'civilisation':    'Civilisation',
-      'conflit':         'Conflit',
-      'mode-production': 'Mode de production',
-      'revolte':         'Révolte',
-    };
-
-    tooltip.innerHTML = '';
-
-    const spanType = document.createElement('div');
-    spanType.className = 'frise-tooltip__type';
-    spanType.textContent = typeLabels[objet.type] || objet.type;
-
-    const spanNom = document.createElement('div');
-    spanNom.className = 'frise-tooltip__nom';
-    spanNom.textContent = objet.nom;
-
-    const spanMeta = document.createElement('div');
-    spanMeta.className = 'frise-tooltip__meta';
-    spanMeta.textContent = periode;
-
-    tooltip.append(spanType, spanNom, spanMeta);
-
-    // Ligne lieu + meneur pour les conflits et révoltes
-    if (objet.lieu) {
-      const spanLieu = document.createElement('div');
-      spanLieu.className = 'frise-tooltip__meta';
-      spanLieu.textContent = objet.lieu;
-      tooltip.appendChild(spanLieu);
-    }
-    if (objet.meneur) {
-      const spanMeneur = document.createElement('div');
-      spanMeneur.className = 'frise-tooltip__meta';
-      spanMeneur.textContent = 'Meneur : ' + objet.meneur;
-      tooltip.appendChild(spanMeneur);
-    }
-    tooltip.classList.add('visible');
-  });
-
-  document.addEventListener('mousemove', e => {
-    const el = e.target.closest('.frise-element');
-    if (!el) {
-      tooltip.classList.remove('visible');
-      return;
-    }
-    tooltip.style.left = (e.clientX + 14) + 'px';
-    tooltip.style.top  = (e.clientY - 28) + 'px';
-  });
-
-  document.addEventListener('mouseout', e => {
-    if (!e.target.closest('.frise-element')) {
-      tooltip.classList.remove('visible');
-    }
-  });
-}
-
-/* ============================================================
-   FRISE MULTI-NIVEAUX — ZOOM
-   ============================================================ */
-
-/**
- * Applique un facteur de zoom, repositionne tous les éléments.
- * @param {number} facteur
- */
-function appliquerZoom(facteur) {
-  niveauZoom = Math.min(Math.max(facteur, 0.25), 16);
-
-  const label = document.getElementById('frise-zoom-label');
-  if (label) label.textContent = '×' + niveauZoom;
-
-  const contenu = document.getElementById('frise-scroll-contenu');
-  if (contenu) contenu.style.width = largeurFrise() + 'px';
-
-  // Repositionner tous les éléments existants
-  document.querySelectorAll('.frise-element').forEach(el => {
-    const objet = trouverObjetParTypeEtId(el.dataset.type, el.dataset.id);
-    if (!objet) return;
-    const debut = objet.dateDebut ?? objet.date;
-    const fin   = objet.dateFin   ?? objet.date;
-    el.style.left  = anneeVersPixels(debut) + 'px';
-    el.style.width = dureeVersPixels(debut, fin) + 'px';
-  });
-
-  construireAxeTemporel();
-}
-
-/**
- * Branche les boutons toggle de visibilité sur chaque niveau de la frise.
- */
-function brancherToggleNiveaux() {
-  document.querySelectorAll('.frise-toggle__btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id      = btn.dataset.niveau;
-      const niveau  = document.getElementById('frise-niveau-' + id);
-      const label   = document.querySelector(`.frise-niveau-label[data-niveau="${id}"]`);
-      const visible = btn.getAttribute('aria-pressed') === 'true';
-
-      btn.setAttribute('aria-pressed', visible ? 'false' : 'true');
-      niveau?.classList.toggle('frise-niveau--masque', visible);
-      label?.classList.toggle('frise-niveau-label--masque', visible);
-    });
-  });
-}
-
-/**
- * Branche les boutons +/− de zoom.
- */
-function brancherControlesZoom() {
-  const btnMoins = document.getElementById('frise-zoom-moins');
-  const btnPlus  = document.getElementById('frise-zoom-plus');
-
-  const pasZoom = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 12, 16];
-
-  if (btnMoins) {
-    btnMoins.addEventListener('click', () => {
-      const idx = pasZoom.indexOf(niveauZoom);
-      if (idx > 0) appliquerZoom(pasZoom[idx - 1]);
-    });
-  }
-
-  if (btnPlus) {
-    btnPlus.addEventListener('click', () => {
-      const idx = pasZoom.indexOf(niveauZoom);
-      if (idx < pasZoom.length - 1) appliquerZoom(pasZoom[idx + 1]);
-    });
-  }
-}
-
-/* ============================================================
-   PAGE DÉTAIL MULTI (detail.html)
-   ============================================================ */
-
-/**
- * Lit ?type=&id= et dispatche vers le bon constructeur de template.
- */
 function afficherPageDetailMulti() {
-  const params  = new URLSearchParams(window.location.search);
-  const type    = params.get('type');
-  const id      = params.get('id');
+  const params    = new URLSearchParams(window.location.search);
+  const type      = params.get('type');
+  const id        = params.get('id');
   const conteneur = document.getElementById('detail-conteneur');
   if (!conteneur) return;
 
   const objet = trouverObjetParTypeEtId(type, id);
 
   if (!objet) {
-    document.title = 'Élément introuvable — Histoire des Batailles';
-    const erreur = document.createElement('div');
-    erreur.className = 'page-erreur';
-    const code = document.createElement('div');
-    code.className = 'page-erreur__code';
-    code.setAttribute('aria-hidden', 'true');
-    code.textContent = '404';
-    const titre = document.createElement('p');
-    titre.className = 'page-erreur__titre';
-    titre.textContent = 'Élément introuvable';
-    const lienRetour = document.createElement('a');
-    lienRetour.href = 'index.html';
-    lienRetour.className = 'btn-retour';
-    lienRetour.innerHTML = '<span class="btn-retour__fleche" aria-hidden="true">←</span> Retour aux archives';
-    erreur.append(code, titre, lienRetour);
-    conteneur.appendChild(erreur);
+    document.title = 'Élément introuvable — Praxis';
+    afficherErreurIntrouvable(conteneur, 'Élément introuvable', id);
     return;
   }
 
-  document.title = `${objet.nom} — Histoire des Batailles`;
+  document.title = `${objet.nom} — Praxis`;
 
   switch (type) {
-    case 'civilisation':    construireDetailCivilisation(conteneur, objet);  break;
-    case 'conflit':         construireDetailConflit(conteneur, objet);       break;
-    case 'mode-production': construireDetailModeProduction(conteneur, objet); break;
-    case 'revolte':         construireDetailRevolte(conteneur, objet);       break;
+    case 'civilisation':     construireDetailCivilisation(conteneur, objet);    break;
+    case 'conflit':          construireDetailConflit(conteneur, objet);         break;
+    case 'mode-production':  construireDetailModeProduction(conteneur, objet);  break;
+    case 'revolte':          construireDetailRevolte(conteneur, objet);         break;
   }
 }
 
-/**
- * Crée l'en-tête commun à toutes les pages détail multi.
- * @param {Object} objet
- * @param {string} labelType
- * @param {string} couleurType
- * @returns {HTMLElement}
- */
+function trouverObjetParTypeEtId(type, id) {
+  switch (type) {
+    case 'bataille':         return (typeof batailles      !== 'undefined') ? batailles.find(b => b.id === id)      || null : null;
+    case 'civilisation':     return (typeof civilisations  !== 'undefined') ? civilisations.find(c => c.id === id)  || null : null;
+    case 'mode-production':  return (typeof modesProduction !== 'undefined') ? modesProduction.find(m => m.id === id) || null : null;
+    case 'conflit':          return (typeof conflits       !== 'undefined') ? conflits.find(c => c.id === id)       || null : null;
+    case 'revolte':          return (typeof revoltes       !== 'undefined') ? revoltes.find(r => r.id === id)       || null : null;
+    default:                 return null;
+  }
+}
+
 function creerEnteteDetailMulti(objet, labelType) {
-  const entete = document.createElement('header');
-  entete.className = 'detail-entete';
-
-  const typeEl = document.createElement('div');
-  typeEl.className = 'detail-multi-type';
-  typeEl.textContent = labelType;
-
-  const periode = document.createElement('div');
-  periode.className = 'detail-multi-periode';
-  const debut = objet.dateAfficheeDebut || String(objet.dateDebut);
-  const fin   = objet.dateAfficheeFin   || String(objet.dateFin);
-  periode.textContent = debut === fin ? debut : `${debut} – ${fin}`;
-
-  const titre = document.createElement('h1');
-  titre.className = 'detail-entete__titre';
-  titre.textContent = objet.nom;
-
-  entete.append(typeEl, periode, titre);
+  const entete = el('header', 'detail-entete');
+  entete.appendChild(el('div', 'detail-multi-type', labelType));
+  const debut = objet.dateAfficheeDebut || objet.dateAffichee || String(objet.dateDebut || '');
+  const fin   = objet.dateAfficheeFin   || String(objet.dateFin || '');
+  const periode = (debut && fin && debut !== fin) ? `${debut} – ${fin}` : (debut || fin);
+  if (periode) entete.appendChild(el('div', 'detail-multi-periode', periode));
+  entete.appendChild(el('h1', 'detail-entete__titre', objet.nom));
   return entete;
 }
 
-/**
- * Template — Civilisation
- */
 function construireDetailCivilisation(conteneur, objet) {
   conteneur.innerHTML = '';
-
   const entete = creerEnteteDetailMulti(objet, 'Civilisation');
+  const lieuEl = el('div', 'detail-entete__lieu',
+    `⚑ ${objet.region}${objet.capitale ? ' — Capitale : ' + objet.capitale : ''}`);
+  entete.appendChild(lieuEl);
 
-  const lieu = document.createElement('div');
-  lieu.className = 'detail-entete__lieu';
-  lieu.textContent = `⚑ ${objet.region}${objet.capitale ? ' — Capitale : ' + objet.capitale : ''}`;
-  entete.appendChild(lieu);
-
-  const corps = document.createElement('div');
-  corps.className = 'detail-corps';
-
-  const principal = document.createElement('div');
-  principal.className = 'detail-principal';
+  const corps     = el('div', 'detail-corps');
+  const principal = el('div', 'detail-principal');
   principal.appendChild(creerSectionDetail('Présentation', objet.description));
-  principal.appendChild(creerSectionDetail('Héritage & conséquences', objet.consequence));
-
+  principal.appendChild(creerSectionDetail('Mode de production', nomModeProductionDepuisId(objet.modeProduction)));
   corps.appendChild(principal);
   conteneur.append(entete, corps);
 }
 
-/**
- * Template — Conflit
- */
 function construireDetailConflit(conteneur, objet) {
   conteneur.innerHTML = '';
-
   const entete = creerEnteteDetailMulti(objet, 'Conflit');
-  const corps = document.createElement('div');
-  corps.className = 'detail-corps';
 
-  const principal = document.createElement('div');
-  principal.className = 'detail-principal';
+  const corps     = el('div', 'detail-corps');
+  const principal = el('div', 'detail-principal');
 
-  // Bloc belligérants simplifié
+  // Bloc belligérants adapté au nouveau schema (belligerantsA / belligerantsB)
   const secBell = creerSectionDetail('Belligérants', null);
-  const blocBell = document.createElement('div');
-  blocBell.className = 'detail-belligerants';
-  const coteA = creerCoteBelligerant(objet.belligerants.a, objet.vainqueur === objet.belligerants.a);
-  const vs = document.createElement('div');
-  vs.className = 'vs-separateur';
-  vs.setAttribute('aria-hidden', 'true');
-  vs.textContent = 'VS';
-  const coteB = creerCoteBelligerant(objet.belligerants.b, objet.vainqueur === objet.belligerants.b);
-  blocBell.append(coteA, vs, coteB);
-  secBell.appendChild(blocBell);
+  const bloc    = el('div', 'detail-belligerants');
+  const coteA   = el('div', 'belligerant__nom', objet.belligerantsA);
+  const vsEl    = el('div', 'vs-separateur', 'VS');
+  vsEl.setAttribute('aria-hidden', 'true');
+  const coteB   = el('div', 'belligerant__nom', objet.belligerantsB);
+  bloc.append(coteA, vsEl, coteB);
+  secBell.appendChild(bloc);
   principal.appendChild(secBell);
 
   principal.appendChild(creerSectionDetail('Déroulement', objet.description));
-  principal.appendChild(creerSectionDetail('Conséquences historiques', objet.consequence));
+  principal.appendChild(creerSectionDetail('Analyse — lutte des classes', objet.analyseClasses));
 
   // Batailles liées
-  if (objet.bataillesLiees && objet.bataillesLiees.length > 0) {
-    const secLiees = document.createElement('section');
-    secLiees.className = 'detail-batailles-liees';
-
-    const titreSec = document.createElement('h2');
-    titreSec.className = 'detail-batailles-liees__titre';
-    titreSec.textContent = 'Batailles de ce conflit';
-    secLiees.appendChild(titreSec);
-
-    const liste = document.createElement('ul');
-    liste.className = 'detail-batailles-liees__liste';
-
-    objet.bataillesLiees.forEach(batailleId => {
-      const b = batailles.find(x => x.id === batailleId);
-      if (!b) return;
-      const li = document.createElement('li');
-      const lien = document.createElement('a');
-      lien.href = `bataille.html?id=${encodeURIComponent(b.id)}`;
-      lien.className = 'detail-batailles-liees__lien';
-      lien.textContent = `${b.nom} — ${b.dateAffichee}`;
-      li.appendChild(lien);
-      liste.appendChild(li);
+  if (objet.batailles && objet.batailles.length > 0) {
+    const secLiees = el('section', 'detail-batailles-liees');
+    secLiees.appendChild(el('h2', 'detail-batailles-liees__titre', 'Batailles de ce conflit'));
+    const ul = el('ul', 'detail-batailles-liees__liste');
+    objet.batailles.forEach(idBat => {
+      const info  = infoBatailleDepuisId(idBat);
+      const li    = el('li');
+      const lienB = el('a', 'detail-batailles-liees__lien', `${info.nom} — ${info.date}`);
+      lienB.href  = `bataille.html?id=${echapper(idBat)}`;
+      li.appendChild(lienB);
+      ul.appendChild(li);
     });
-
-    secLiees.appendChild(liste);
+    secLiees.appendChild(ul);
     principal.appendChild(secLiees);
   }
 
@@ -1301,80 +947,68 @@ function construireDetailConflit(conteneur, objet) {
   conteneur.append(entete, corps);
 }
 
-/**
- * Template — Mode de production
- */
 function construireDetailModeProduction(conteneur, objet) {
   conteneur.innerHTML = '';
-
   const entete = creerEnteteDetailMulti(objet, 'Mode de production');
+  entete.appendChild(el('div', 'detail-entete__lieu', `⚑ ${objet.region}`));
 
-  const lieu = document.createElement('div');
-  lieu.className = 'detail-entete__lieu';
-  lieu.textContent = `⚑ ${objet.zone}`;
-  entete.appendChild(lieu);
-
-  const corps = document.createElement('div');
-  corps.className = 'detail-corps';
-
-  const principal = document.createElement('div');
-  principal.className = 'detail-principal';
-  principal.appendChild(creerSectionDetail('Caractéristiques', objet.description));
-  principal.appendChild(creerSectionDetail('Héritage & conséquences', objet.consequence));
-
+  const corps     = el('div', 'detail-corps');
+  const principal = el('div', 'detail-principal');
+  principal.appendChild(creerSectionDetail('Définition', objet.definition));
+  principal.appendChild(creerSectionDetail('Analyse', objet.analyse));
   corps.appendChild(principal);
   conteneur.append(entete, corps);
 }
 
-/**
- * Template — Révolte
- */
 function construireDetailRevolte(conteneur, objet) {
   conteneur.innerHTML = '';
-
   const entete = creerEnteteDetailMulti(objet, 'Révolte');
+  entete.appendChild(el('div', 'detail-entete__lieu',
+    `⚑ ${objet.lieu}${objet.meneur ? ' — Meneur : ' + objet.meneur : ''}`));
 
-  const lieu = document.createElement('div');
-  lieu.className = 'detail-entete__lieu';
-  lieu.textContent = `⚑ ${objet.lieu}${objet.meneur ? ' — Meneur : ' + objet.meneur : ''}`;
-  entete.appendChild(lieu);
-
-  const corps = document.createElement('div');
-  corps.className = 'detail-corps';
-
-  const principal = document.createElement('div');
-  principal.className = 'detail-principal';
-  principal.appendChild(creerSectionDetail('Déroulement', objet.description));
-  principal.appendChild(creerSectionDetail('Conséquences historiques', objet.consequence));
-
+  const corps     = el('div', 'detail-corps');
+  const principal = el('div', 'detail-principal');
+  principal.appendChild(creerSectionDetail('Présentation', objet.description));
+  principal.appendChild(creerSectionDetail('Analyse — lutte des classes', objet.analyseClasses));
   corps.appendChild(principal);
   conteneur.append(entete, corps);
+}
+
+/** Affiche un message 404 élégant dans le conteneur donné. */
+function afficherErreurIntrouvable(conteneur, titre, id) {
+  conteneur.innerHTML = '';
+  const erreur = el('div', 'page-erreur');
+  const code   = el('div', 'page-erreur__code', '404');
+  code.setAttribute('aria-hidden', 'true');
+  const msg = el('p', 'page-erreur__titre', titre);
+  const detail = el('p', 'page-erreur__message',
+    id ? `Aucun élément ne correspond à l'identifiant « ${id} ».`
+       : 'Aucun identifiant n\'a été fourni dans l\'URL.');
+  const retour = el('a', 'btn-retour');
+  retour.href = 'index.html';
+  const fleche = el('span', 'btn-retour__fleche', '←');
+  fleche.setAttribute('aria-hidden', 'true');
+  retour.appendChild(fleche);
+  retour.appendChild(document.createTextNode(' Retour à l\'accueil'));
+  erreur.append(code, msg, detail, retour);
+  conteneur.appendChild(erreur);
 }
 
 /* ============================================================
-   INITIALISATION
+   POINT D'ENTRÉE — Routage par data-page
+   Détecte la page courante et initialise la logique correspondante.
    ============================================================ */
 
-/**
- * Point d'entrée — détecte la page courante et initialise en conséquence.
- */
-function initialiser() {
+document.addEventListener('DOMContentLoaded', () => {
   const page = document.body.dataset.page;
 
-  if (page === 'accueil') {
-    construireFriseMulti();
-    brancherControles();
-    recalculerResultats();
-    afficherBatailles();
+  switch (page) {
+    case 'modes-production': initModesProduction(); break;
+    case 'civilisations':    initCivilisations();   break;
+    case 'conflits':         initConflits();        break;
+    case 'revoltes':         initRevoltes();        break;
+    case 'detail':           afficherPageDetail();  break;
+    case 'detail-multi':     afficherPageDetailMulti(); break;
+    // 'accueil' : page statique, aucune initialisation requise
   }
-
-  if (page === 'detail') {
-    afficherPageDetail();
-  }
-
-  if (page === 'detail-multi') {
-    afficherPageDetailMulti();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', initialiser);
+});

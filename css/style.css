@@ -1485,6 +1485,18 @@ sup {
   color: var(--couleur-texte-dim);
 }
 
+/* Tag cliquable (révoltes liées, etc.) */
+a.tag, .tag--lien {
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--couleur-accent);
+  border-color: rgba(201, 168, 76, 0.4);
+}
+a.tag:hover, .tag--lien:hover {
+  background-color: rgba(201, 168, 76, 0.08);
+  border-color: var(--couleur-accent);
+}
+
 /* Badge résultat révolte */
 .badge-victoire    { background: rgba(58, 106, 58, 0.2); color: var(--couleur-production-clair); border-color: var(--couleur-production); }
 .badge-defaite     { background: rgba(142, 42, 42, 0.2); color: var(--couleur-conflits-clair);   border-color: var(--couleur-conflits); }
